@@ -9,6 +9,8 @@
 	export let parent: SvelteComponent;
 
 	const modalStore = getModalStore();
+
+
 	
 
 	// Form Data
@@ -53,7 +55,9 @@
 	const cForm = 'border border-surface-500 p-4 space-y-4 rounded-container-token';
 
 	$: isValidPin = formData.password.length === 5;
-	$: console.log(isValidPin)
+	function togglepin(){
+		formData.isSupervisor = !FormData.isSupervisor;
+	}
 </script>
 
 <!-- @component This example creates a simple form modal. -->
@@ -61,6 +65,7 @@
 {#if $modalStore[0]}
 	<div class="{cBase}">
 		<header class={cHeader}>{$modalStore[0].title ?? '(title missing)'}</header>
+		<article>{$modalStore[0].meta.currentCollection.name}</article>
 		<!-- Enable for debugging: -->
 		<div class="modal-form {cForm}">
 			<label class="label">
@@ -74,10 +79,9 @@
 
 			</label>
 
-			<label class="label">
+			<label class={'label ' + (formData.isSupervisor? 'block' : 'hidden')}>
 				<span>Pin (5 digits)</span>
-				<input class={'input ' + (isValidPin ? 'input-success ': 'input-error ')
-								+(!formData.isSupervisor? 'hidden' : '') }
+				<input class={'input ' + (isValidPin ? 'input-success ': 'input-error ') }
 						type="text" name="pin" bind:value={formData.password} placeholder="Enter pin..." maxlength="5" />
 			</label>
 			

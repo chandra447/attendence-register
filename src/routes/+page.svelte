@@ -3,7 +3,6 @@
   import AdminLogin from "../components/adminLogin.svelte";
   import Register from "../components/register.svelte";
   import UserLogin from "../components/UserLogin.svelte";
-  import SuperDebug, { superForm } from "sveltekit-superforms";
 
 export let form;
   

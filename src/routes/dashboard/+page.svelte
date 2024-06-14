@@ -1,55 +1,59 @@
-<!-- YOU CAN DELETE EVERYTHING IN THIS PAGE -->
 <script>
-import { RadioGroup, RadioItem, getModalStore,SlideToggle } from '@skeletonlabs/skeleton';
-import {employeeObject, ledgersMap,generateEmployees} from '../../lib/utils.js'
+import { getModalStore } from '@skeletonlabs/skeleton';
+
 import Employee from "../../components/employee.svelte";
+import { get } from 'svelte/store';
+import { page } from '$app/stores';
+  import { onMount } from 'svelte';
 
-	export let data;
+export let data;
+const modalStore = getModalStore();
+let ledgers = get(page).data.ledgers;
+let selectedLedgerindex = 0;
+$: selectedLedger = ledgers[selectedLedgerindex];
+// Fucntion to fetch ledgers
+const fetchLedgers = async(newLedgerName=null) =>{
+	const response = await fetch('/ledger',{method:'GET'});
+	if (response.ok){
+		ledgers = await response.json();
+		if(newLedgerName){
+			selectedLedgerindex = ledgers.findIndex(ledger => ledger.name === newLedgerName);
+		}
+	}else{
+		console.log('Failed to fetch ledgers');
+	}
+};
 
 
-	const modalStore = getModalStore();
-
+//function to handle the create user modal
 function modalComponentForm() {
+	
 		const modal = {
 			type: 'component',
-			component: 'modelComponentOne',
+			component: 'CreateUser',
+			meta: {currentCollection:selectedLedger},
 			title: 'Create Employee',
-			response: (/** @type {any} */ r) => console.log('response:', r)
+			response: (/** @type {any} */ r) => { (ledgers=fetchLedgers())}
 		};
 		// @ts-ignore
 		modalStore.trigger(modal);
 	};
-	let ledgers = ['Main Road','Department Stores'];
-	function addLedgeritem(item){
-		console.log(ledgers)
-		console.log('Adding to the array',item)
-		// ledgers = [item.newLedger,...ledger]
-		ledgers = [...ledgers,item.newLedger]
-		console.log(ledgers)
-	}
-	function modalLedger() {
-		const modal = {
-			type: 'component',
-			component: 'createLedgerComponent',
-			title: 'make Supervisor',
-			response: (/** @type {any} */ r) => addLedgeritem( r)
-		};
-		// @ts-ignore
-		modalStore.trigger(modal);
-	}
 
-	let selectedLedgerindex = 0;
-	let selectedLedger = ledgers[selectedLedgerindex];
+//function to handle the create ledger modal
+function modalLedger() {
+	const modal = {
+		type: 'component',
+		component: 'createLedgerComponent',
+		title: 'make Supervisor',
+		response: (/** @type {any} */ r) => fetchLedgers(),
+	};
+	// @ts-ignore
+	modalStore.trigger(modal);
+}
+
+
 	
 
-
-	function getLedgers() {
-    return Object.keys(employeeObject);
-  }
-
-  function getEmployees(){
-	return ledgersMap.get(selectedLedger)?.employees;
-  }
 </script>
 <div class="card mt-4 mx-4 ">
 	<div class="card-header">
@@ -78,18 +82,27 @@ function modalComponentForm() {
 			</div>
 
 		</div >
+		
 		<div class="flex flex-row space-x-3 relative mt-2 flex-wrap md:space-x-5 items-center">
-			<RadioGroup active="variant-filled-primary" hover="hover:variant-soft-primary">
-				{#each ledgers as item,index }
-
-				<RadioItem bind:group={selectedLedgerindex} name='ledgerDisplay' value={index} selected>{item}</RadioItem>
-				{/each}
+			<label class="label">
+	
+				<select class="select font-bold mt-2 variant-outline-primary input-group" size="1" bind:value={selectedLedgerindex}>
+					{#if ledgers.length > 0}
+						{#each ledgers as item, index}
+							<option value={index} selected={index === selectedLedgerindex}>{item.name}</option>
+						{/each}
+					{:else}
+						<option value="create">Create a new ledger</option>
+					{/if}
+				</select>
+	
 				
-			</RadioGroup>
+			</label>
+			
 
 			<!-- Input for new ledger -->
 			 <button class={'btn btn-sm variant-ghost-primary mt-2 md:mt-0 '+
-							(data.user.isAdmin? '': 'hidden')} on:click={modalLedger}>New Ledger ✚</button>
+							(data.user.isAdmin? '': 'hidden')} on:click={modalLedger} >New Ledger ✚</button>
 		</div>
 
 		<!-- employees list -->
@@ -111,6 +124,8 @@ function modalComponentForm() {
 				<Employee status="In shop" duration="00:45" name="Zoro" />
 				<Employee status="Outside shop" duration="00:25" name="Nishinoya" />
 			{/if}
+
+		
 	</section>
 	<div class="card-footer"></div>
 </div>

@@ -7,5 +7,5 @@
 </script>
 
 
-<Toast/>
+<Toast />
 <slot />

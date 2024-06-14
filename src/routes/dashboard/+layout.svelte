@@ -1,12 +1,12 @@
 <script>
-	import {AppBar, Avatar, Modal, initializeStores} from '@skeletonlabs/skeleton';
+	import {AppBar, Avatar, Modal, initializeStores,Toast} from '@skeletonlabs/skeleton';
 	import CreateUser from '../../lib/modals/UserOnboard.svelte'
-  import SecondModal from '$lib/modals/SecondModal.svelte';
+  import LedgerCreator from '$lib/modals/LedgerCreator.svelte';
 	initializeStores();
 
 	const modalRegistry = {
-		modelComponentOne: {ref:CreateUser},
-		createLedgerComponent: {ref:SecondModal},
+		CreateUser: {ref:CreateUser},
+		createLedgerComponent: {ref:LedgerCreator},
 	};
 	 
 	
@@ -30,5 +30,6 @@
 </AppBar>
 
 <Modal components={modalRegistry}/>
+<Toast zIndex="z-[1200]"/>
 
 <slot />
