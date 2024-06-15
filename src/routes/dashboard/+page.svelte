@@ -3,8 +3,20 @@ import { getModalStore } from '@skeletonlabs/skeleton';
 
 import Employee from "../../components/employee.svelte";
 import { get } from 'svelte/store';
-import { page } from '$app/stores';
+import { page, updated } from '$app/stores';
+import { popup,ListBox,ListBoxItem } from '@skeletonlabs/skeleton';
   import { onMount } from 'svelte';
+ 
+
+
+const popupCombobox= {
+	event: 'click',
+	target: 'popupCombobox',
+	placement: 'bottom',
+	closeQuery: '.listbox-item'
+};
+
+
 
 export let data;
 const modalStore = getModalStore();
@@ -23,6 +35,27 @@ const fetchLedgers = async(newLedgerName=null) =>{
 		console.log('Failed to fetch ledgers');
 	}
 };
+$:  employees=[];
+
+async function fetchEmployees() {
+		const response = await fetch(`/employees?register=${selectedLedger.id}`, {
+            method: 'GET'
+        });
+		console.log('fetch employees from modal');
+		if (response.ok){
+			employees = await response.json();
+			let responseMessage = 'Employees fetched Sucessfully'
+		}else{
+			const error = await response.json();
+			let responseMessage = error.message
+		}
+
+};
+onMount(fetchEmployees)
+
+async function handleEmployeeAdded(){
+	await fetchEmployees();
+}
 
 
 //function to handle the create user modal
@@ -33,10 +66,11 @@ function modalComponentForm() {
 			component: 'CreateUser',
 			meta: {currentCollection:selectedLedger},
 			title: 'Create Employee',
-			response: (/** @type {any} */ r) => { (ledgers=fetchLedgers())}
+			response: (/** @type {any} */ r) => fetchEmployees(),
 		};
 		// @ts-ignore
 		modalStore.trigger(modal);
+		handleEmployeeAdded();
 	};
 
 //function to handle the create ledger modal
@@ -55,7 +89,7 @@ function modalLedger() {
 	
 
 </script>
-<div class="card mt-4 mx-4 ">
+<div class="mt-4 mx-4 bg-surface-200 rounded-lg h-[750px] ">
 	<div class="card-header">
 		<h2 class="h3 mb-4">Hello {data.user.username} 👋🏻</h2>
 		<div class="flex flex-row space-x-0 md:space-x-5 relative flex-wrap">
@@ -86,7 +120,8 @@ function modalLedger() {
 		<div class="flex flex-row space-x-3 relative mt-2 flex-wrap md:space-x-5 items-center">
 			<label class="label">
 	
-				<select class="select font-bold mt-2 variant-outline-primary input-group" size="1" bind:value={selectedLedgerindex}>
+				<select class="select font-bold mt-2 variant-outline-primary input-group bg-slate-400" size="1" bind:value={selectedLedgerindex}
+				on:change={fetchEmployees}>
 					{#if ledgers.length > 0}
 						{#each ledgers as item, index}
 							<option value={index} selected={index === selectedLedgerindex}>{item.name}</option>
@@ -95,6 +130,23 @@ function modalLedger() {
 						<option value="create">Create a new ledger</option>
 					{/if}
 				</select>
+
+				<!-- <button class="btn variant-filled w-48 justify-between" use:popup={popupCombobox}>
+					<span class="capitalize">{ledgers[selectedLedgerindex].name ?? 'Trigger'}</span>
+					<span>↓</span>
+				</button>
+
+
+			<div class="card w-48 shadow-xl py-2" data-popup="popupCombobox">
+				<ListBox rounded="rounded-none">
+					{#each ledgers as item,index}
+					<ListBoxItem bind:group={selectedLedgerindex} name="medium" value={index}> {item.name}</ListBoxItem>
+					{/each}
+				</ListBox>
+				<div class="arrow bg-surface-100-800-token" />
+			</div>
+					 -->
+					
 	
 				
 			</label>
@@ -110,22 +162,24 @@ function modalLedger() {
 			
 		
 	</div>
-	<section class="p-4 overflow-y-auto ">
-		<div class="flex flex-col mx-auto mt-10 space-y-3 md:mx-20  w-3/4 px-2 over-flow-y-auto h-65
-						">
-			{#if ledgers[selectedLedgerindex]==="Main Road"}
-				<Employee status="In shop" duration="00:45" name="Zoro" />	
-				<Employee status="Outside shop" duration="00:55" name="sanji" />	
-				<Employee status="In shop" duration="00:15" name="luffy" />	
-				<Employee status="Outside shop" duration="00:55" name="Nami" />		
-			{:else}	
-				<Employee status="In shop" duration="00:45" name="Hinata" />
-				<Employee status="In shop" duration="00:55" name="Kageyama" />
-				<Employee status="In shop" duration="00:45" name="Zoro" />
-				<Employee status="Outside shop" duration="00:25" name="Nishinoya" />
-			{/if}
+	{#if employees.length===0}
+		<section class=" w-full justify-center flex pb-10 mt-60">
+			<h1 class="h1">
+				<span class="bg-gradient-to-br text-6xl  from-red-500 to-yellow-500 bg-clip-text text-transparent box-decoration-clone">
+					Add Employees.</span>
+			</h1>
+		</section>
+	{:else}
 
-		
-	</section>
+		<section class="p-4 overflow-y-auto ">
+			<div class="flex flex-col mx-auto mt-10 space-y-3 md:mx-20  w-3/4 px-2 over-flow-y-auto h-65
+							">
+					
+						{#each employees as emp}
+						<Employee status="In shop" duration="00:45" name={emp.Name} />	
+						{/each}
+			
+		</section>
+	{/if}
 	<div class="card-footer"></div>
 </div>

@@ -2,6 +2,8 @@
 	import {AppBar, Avatar, Modal, initializeStores,Toast} from '@skeletonlabs/skeleton';
 	import CreateUser from '../../lib/modals/UserOnboard.svelte'
   import LedgerCreator from '$lib/modals/LedgerCreator.svelte';
+
+
 	initializeStores();
 
 	const modalRegistry = {
@@ -30,6 +32,6 @@
 </AppBar>
 
 <Modal components={modalRegistry}/>
-<Toast zIndex="z-[1200]"/>
+<Toast zIndex="z-[1400]"/>
 
 <slot />

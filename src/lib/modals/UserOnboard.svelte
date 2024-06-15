@@ -3,14 +3,34 @@
 
 	// Stores
 	import { getModalStore } from '@skeletonlabs/skeleton';
+	import {getToastStore} from "@skeletonlabs/skeleton";
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+	function handlefetchEmployees(){
+		dispatch('RefreshEmployees',{value:true})
+	}
+
+
+	const toastStore = getToastStore();
 
 	// Props
 	/** Exposes parent props to this component. */
 	export let parent: SvelteComponent;
 
 	const modalStore = getModalStore();
+	const triggertoast=(/** @type {string} */ tmessage, background)=>{
+        let t = {
+        message: tmessage,
+        timeout:10000,
+        background: background,
+        padding:'p-6',
+        hoverable: true
+    };
+	toastStore.trigger(t);
+    }
 
-
+	let loading = false;
 	
 
 	// Form Data
@@ -18,9 +38,11 @@
 		username: '',
 		password: '',
 		isSupervisor: false,
+		register: '',
 	};
 	async function handleSubmit() {
-		console.log('called function handleSumbit')
+		loading = true;
+	
 		const response = await fetch('/onboard',
 			{
 				method: 'POST',
@@ -29,13 +51,21 @@
 				},
 				body: JSON.stringify(formData),
 			});
+
 		if (response.ok) {
+			
 			const data = await response.json();
-			console.log('Employee created successfully:', data);
+			triggertoast('Created employee: '+formData.username,'variant-filled-success');
+			handlefetchEmployees();
 			modalStore.close();
+			loading=false;
 			
 		}else{
-			console.error('Error submitting form');
+			const error = await response.json();
+			// triggertoast('failed creating: '+formData.username,'variant-filled-error');
+			triggertoast(error.message,'variant-filled-error');
+			modalStore.close();
+			loading=false;
 		}
 		return(response.ok);
 		
@@ -43,8 +73,11 @@
 
 	// We've created a custom submit function to pass the response and close the modal.
 	function onFormSubmit(): void {
-		if ($modalStore[0].response) $modalStore[0].response(formData);
-		handleSubmit();
+		if ($modalStore[0].response) {
+			formData['register'] = $modalStore[0]? $modalStore[0].meta.currentCollection.id : '';
+			handleSubmit();
+			$modalStore[0].response(formData);
+	}
 		
 		}
 	
@@ -56,7 +89,9 @@
 
 	$: isValidPin = formData.password.length === 5;
 	function togglepin(){
-		formData.isSupervisor = !FormData.isSupervisor;
+		
+		formData.isSupervisor = !formData.isSupervisor;
+		
 	}
 </script>
 
@@ -65,7 +100,7 @@
 {#if $modalStore[0]}
 	<div class="{cBase}">
 		<header class={cHeader}>{$modalStore[0].title ?? '(title missing)'}</header>
-		<article>{$modalStore[0].meta.currentCollection.name}</article>
+		<article>For register <b class="text-violet-600 text-pretty">{$modalStore[0].meta.currentCollection.name}</b></article>
 		<!-- Enable for debugging: -->
 		<div class="modal-form {cForm}">
 			<label class="label">
@@ -74,8 +109,15 @@
 			</label>
 
 			<label class="label space-x-1">
-				<input class="checkbox" type="checkbox" name="isSupervisor" bind:value={formData.isSupervisor}/>
-				<span class="badge variant-filled-surface">SuperVisor?</span>
+				<span class="badge variant-filled-surface text-base">SuperVisor?</span>
+				<button class={'btn btn-icon ' + (formData.isSupervisor? 'variant-filled-primary' : 'variant-filled-secondary')}  on:click={togglepin} >
+					{#if formData.isSupervisor}
+					✅
+					{:else}
+					<i class="fa-solid fa-x"></i>
+					{/if}
+				</button>
+				
 
 			</label>
 
@@ -89,7 +131,13 @@
 		<!-- prettier-ignore -->
 		<footer class="modal-footer {parent.regionFooter}">
 			<button class="btn {parent.buttonNeutral}" on:click={parent.onClose}>{parent.buttonTextCancel}</button>
-			<button class="btn {parent.buttonPositive}" on:click={onFormSubmit} >Create Employee</button>
+			<button class="btn {parent.buttonPositive}" on:click={onFormSubmit} >
+				{#if loading}
+				Creating...
+				{:else}
+				Create Employee
+				{/if}
+			</button>
 		</footer>
 	</div>
 {/if}

@@ -4,15 +4,15 @@
 
 	const toastStore = getToastStore();
 	let background = 'variant-filled-success';
-	const triggertoast=(/** @type {string} */ tmessage, backgroud)=>{
+	const triggertoast=(/** @type {string} */ tmessage, background)=>{
         let t = {
         message: tmessage,
         timeout:10000,
-        background: backgroud,
+        background: background,
         padding:'p-6',
         hoverable: true
     };
-	
+	toastStore.trigger(t);
     }
 
     export let parent;
@@ -38,12 +38,12 @@ async function handleSubmit() {
 			body: JSON.stringify(formData),
 		});
 	if (response.ok) {
-		triggertoast('Created ledger: '+formData.newLedger,background='variant-filled-success')
+		triggertoast('Created ledger: '+formData.newLedger,'variant-filled-success')
 		const data = await response.json();
 		modalStore.close();
 		
 	}else{
-		triggertoast('failed creating: '+formData.newLedger,background='variant-filled-error')
+		triggertoast('failed creating: '+formData.newLedger,'variant-filled-error')
 		console.error('Error submitting form');
 	}
 	loading = false;
