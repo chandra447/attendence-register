@@ -34,7 +34,7 @@ export const load = async ({ locals }) => {
 					const registerIds = ledgerBelonging.map(employee => employee.register);
 					let ledgers_after = serializeNonPOJOs(
 						await locals.pb.collection('registers').getFullList({
-							filter: `id = "${registerIds.join('" || register.id = "')}"`,
+							filter: `id = "${registerIds.join('" || register.id = "')}" && owner='${locals.user.Owner}'`,
 						})
 					);
 	

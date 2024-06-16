@@ -12,6 +12,7 @@ export async function POST({ request,locals })
           const existingUsers = await locals.pb.collection('users').getFullList({
                 filter: `username = "${formData.username}" && Owner="${locals.user.id}"`
           });
+         
           if (existingUsers.length>0){
             return new Response(JSON.stringify({message:"User "+ formData.username +" already exists"}),
             {status:400});

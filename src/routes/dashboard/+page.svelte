@@ -7,6 +7,7 @@ import { page, updated } from '$app/stores';
 import { popup,ListBox,ListBoxItem } from '@skeletonlabs/skeleton';
 import { onMount } from 'svelte';
 import { sleep } from '$lib/utils';
+import { triggerRefresh,resetStore } from '../../stores/data';
  
 
 
@@ -17,10 +18,29 @@ const popupCombobox= {
 	closeQuery: '.listbox-item'
 };
 
+let refreshEmployees=false;
+let refreshLedger = false;
+
+triggerRefresh.subscribe( value=>{
+	refreshEmployees = value.employees;
+	refreshLedger = value.ledgers;
+
+	if (refreshEmployees){
+		fetchEmployees();
+		resetStore()
+
+	}
+	if (refreshLedger){
+		fetchLedgers();
+		resetStore();
+	}
+})
 
 
 export let data;
+let fetchingEmployees = false;
 const modalStore = getModalStore();
+//fetch the ledgers we got from onload
 let ledgers = get(page).data.ledgers;
 let selectedLedgerindex = 0;
 $: selectedLedger = ledgers[selectedLedgerindex];
@@ -39,24 +59,22 @@ const fetchLedgers = async(newLedgerName=null) =>{
 $:  employees=[];
 
 async function fetchEmployees() {
-
-		console.log('berfore sleep ',selectedLedger.id)
+		fetchingEmployees = true;
 		await sleep(2000);
-		console.log('after sleep ',selectedLedger.id)
 
 		const response = await fetch(`/employees?register=${selectedLedger.id}`, {
             method: 'GET'
         });
-		console.log('fetch employees from modal');
+	
 		if (response.ok){
 			employees = await response.json();
 			let responseMessage = 'Employees fetched Sucessfully'
-			console.log(employees)
-			console.log('at the end',selectedLedger.id)
+		
 		}else{
 			const error = await response.json();
 			let responseMessage = error.message
 		}
+		fetchingEmployees = false;
 
 };
 onMount(() => {
@@ -65,10 +83,8 @@ onMount(() => {
   }
 });
 
-async function handleEmployeeAdded(){
-	await fetchEmployees();
-}
 
+let ledgerOperation='create';
 
 //function to handle the create user modal
 function modalComponentForm() {
@@ -78,11 +94,10 @@ function modalComponentForm() {
 			component: 'CreateUser',
 			meta: {currentCollection:selectedLedger},
 			title: 'Create Employee',
-			response: (/** @type {any} */ r) => fetchEmployees(),
+			response: (/** @type {any} */ r) => console.log('response:', r),
 		};
 		// @ts-ignore
 		modalStore.trigger(modal);
-		handleEmployeeAdded();
 	};
 
 //function to handle the create ledger modal
@@ -90,20 +105,23 @@ function modalLedger() {
 	const modal = {
 		type: 'component',
 		component: 'createLedgerComponent',
-		title: 'make Supervisor',
+		title: ledgerOperation==="create"? 'Create ledger' : 'Delete Ledger',
+		meta: {operation:ledgerOperation,ledgerList:ledgers},
 		response: (/** @type {any} */ r) => fetchLedgers(),
 	};
 	// @ts-ignore
 	modalStore.trigger(modal);
 }
 
-
+function placeholderArray(placeholderCount) {
+    return Array(placeholderCount).fill(null);
+  }
 	
 
 </script>
 <div class="mt-4 mx-4 bg-surface-200 rounded-lg h-[750px] ">
 	<div class="card-header">
-		<h2 class="h3 mb-4">Hello {data.user.username} 👋🏻</h2>
+		<h2 class="h3 mb-4">Hello {data.user.isAdmin? data.user.name :data.user.username} 👋🏻</h2>
 		<div class="flex flex-row space-x-0 md:space-x-5 relative flex-wrap">
 			<div class="input-group input-group-divider grid-cols-[auto_1fr_auto] order-first w-full
 			md:w-1/2">
@@ -156,32 +174,59 @@ function modalLedger() {
 
 			<!-- Input for new ledger -->
 			 <button class={'btn btn-sm variant-ghost-primary mt-2 md:mt-0 '+
-							(data.user.isAdmin? '': 'hidden')} on:click={modalLedger} >New Ledger ✚</button>
+							(data.user.isAdmin? '': 'hidden')} on:click={()=>{ ledgerOperation='create';modalLedger();}} >New Ledger ✚</button>
+			<button class={'btn btn-sm variant-ghost-error mt-2 md:mt-0 '+
+							(data.user.isAdmin? '': 'hidden')} on:click={()=>{ ledgerOperation='delete';modalLedger();}} >Delete Ledger -</button>
 		</div>
+		
+		
+
 
 		<!-- employees list -->
 		
 			
 		
 	</div>
-	{#if employees.length===0}
-		<section class=" w-full justify-center flex pb-10 mt-60">
-			<h1 class="h1">
-				<span class="bg-gradient-to-br text-6xl  from-red-500 to-yellow-500 bg-clip-text text-transparent box-decoration-clone">
-					Add Employees.</span>
-			</h1>
-		</section>
-	{:else}
+	{#if fetchingEmployees}
 
-		<section class="p-4 overflow-y-auto ">
-			<div class="flex flex-col mx-auto mt-10 space-y-3 md:mx-20  w-3/4 px-2 over-flow-y-auto h-65
-							">
+			<!-- place holder section -->
+			<section class="card w-full pb-10 mt-20 ">
+				<div class="p-7 space-y-4">
+					<div class="placeholder" />
+					{#each placeholderArray(4) as _,index}
+						<div class="grid grid-cols-4 gap-8">
+							<div class="placeholder-circle w-16" />
+							{#each placeholderArray(2) as _,index}
+								<div class="placeholder"> </div>
+							{/each}
+						</div>
+					{/each}
 					
-						{#each employees as emp}
-						<Employee status="In shop" duration="00:45" name={emp.Name} />	
-						{/each}
-			
-		</section>
+				</div>
+			</section>
+
+
+	{:else}
+		{#if employees.length===0}
+			<section class=" w-full justify-center flex pb-10 mt-60">
+				<h1 class="h1">
+					<span class="bg-gradient-to-br text-6xl  from-red-500 to-yellow-500 bg-clip-text text-transparent box-decoration-clone">
+						Add Employees.</span>
+				</h1>
+			</section>
+		{:else}
+
+			<section class="p-4 overflow-y-auto ">
+				<div class="flex flex-col mx-auto mt-10 space-y-3 md:mx-20  w-3/4 px-2 over-flow-y-auto h-65
+								">
+						
+							{#each employees as emp}
+							<Employee status="In shop" duration="00:45" name={emp.Name} />	
+							{/each}
+				
+			</section>
+		{/if}
+
 	{/if}
 	<div class="card-footer"></div>
 </div>

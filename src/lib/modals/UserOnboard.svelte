@@ -5,10 +5,14 @@
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import {getToastStore} from "@skeletonlabs/skeleton";
 	import { createEventDispatcher } from 'svelte';
+	import { triggerRefresh } from '../../stores/data';
 
 	const dispatch = createEventDispatcher();
-	function handlefetchEmployees(){
-		dispatch('RefreshEmployees',{value:true})
+	
+	function handleRefreshEmployees(){
+		triggerRefresh.update( currentData=>{
+			return {...currentData,employees: true};
+		})
 	}
 
 
@@ -56,7 +60,7 @@
 			
 			const data = await response.json();
 			triggertoast('Created employee: '+formData.username,'variant-filled-success');
-			handlefetchEmployees();
+			handleRefreshEmployees();
 			modalStore.close();
 			loading=false;
 			

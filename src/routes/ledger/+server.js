@@ -1,7 +1,7 @@
 import { serializeNonPOJOs } from '$lib/utils.js';
-import { redirect } from '@sveltejs/kit';
+import { json, redirect } from '@sveltejs/kit';
 import { fail } from  '@sveltejs/kit';
-import { message } from 'sveltekit-superforms';
+
 
 //to create the ledger
 export async function POST({request,locals})
@@ -21,7 +21,6 @@ export async function POST({request,locals})
         const existingLedgers = await locals.pb.collection('registers').getFullList({
 			filter: `owner = '${data.owner}' && name = '${data.name}'`,
 		});
-        console.log(existingLedgers)
         if (existingLedgers.length >0){
             throw fail(404,{message:'Ledger already exists'})
         }
@@ -43,6 +42,7 @@ export async function POST({request,locals})
 
 };
 
+//to get the lost of all ledgers
 export const GET = async ({ locals }) => {
 	if (!locals.pb.authStore.isValid) {
 		return new Response('Not authenticated', { status: 401 });
@@ -62,3 +62,23 @@ export const GET = async ({ locals }) => {
 		return new Response(err.message, { status: err.status });
 	}
 };
+
+export const DELETE = async({locals,request}) =>{
+    if (!locals.pb.authStore.isValid){
+        return new Response('Not authenticated',{status:400});
+    }
+    const data = await request.json();
+    const registerId = data.id;
+
+
+    try{
+        const deleteResponse = serializeNonPOJOs(
+            await locals.pb.collection('registers').delete(`${registerId}`));
+            return new Response(JSON.stringify({message:data.name}), { status: 200 });
+        
+    }catch(err){
+        console.log("Error when deleting ledger", err);
+        throw fail(404,{message:'Unable to delete ledger '+ data.name})
+    }
+    
+}

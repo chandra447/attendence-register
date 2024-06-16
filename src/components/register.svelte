@@ -1,9 +1,10 @@
 <script>
-    import { createEventDispatcher } from "svelte";
     import {getToastStore} from "@skeletonlabs/skeleton"
     import { enhance } from "$app/forms";
     import Input from "./Input.svelte";
     import Spinner from "./spinner.svelte";
+    import { registerActive } from "../stores/data";
+
     export let formData;
     let loading=false;
     const toastStore = getToastStore();
@@ -48,25 +49,25 @@
     function validatePasswords(){
         passwordMatch = password === confirmpassword;
     }
-    const dispatch = createEventDispatcher();
-    function handleRegisterDispatch(){
-        dispatch('registered',{value:false})
+
+    function handleRegisterStore(){
+        registerActive.set(false);
     }
 </script>
-<form action="?/register" method="post" class="space-y-2" use:enhance={submitRegistration} use:enhance={submitRegistration}>
+<form action="?/register" method="post" class="space-y-3" use:enhance={submitRegistration} use:enhance={submitRegistration}>
     <button type="button"  class="btn btn-sm variant-outline-secondary hover:variant-filled-secondary
-                    hover:text-white font-semibold" on:click={handleRegisterDispatch} >&larr;</button>
+                    hover:text-white font-semibold" on:click={handleRegisterStore} >&larr;</button>
 
-    <Input bclass="input px-10 md:px-5 py-2" type="text" placeholder="Name" id="name" errors={formData?.errors?.name}
+    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="text" placeholder="Name" id="name" errors={formData?.errors?.name}
         disabled={loading} value={formData?.data?.name ?? ''} label='Name'/>
 
-    <Input bclass="input px-10 md:px-5 py-2" type="email" placeholder="Enter Email" id="email" errors={formData?.errors?.email}
+    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="email" placeholder="Enter Email" id="email" errors={formData?.errors?.email}
             disabled={loading} value={formData?.data?.email ?? '' } label="email"/>
 
-    <Input bclass="input px-10 md:px-5 py-2" type="password" id="password" placeholder="Enter Password" errors={formData?.errors?.password}
+    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="password" id="password" placeholder="Enter Password" errors={formData?.errors?.password}
             disabled = {loading} label="Password"/>
   
-    <Input bclass="input px-10 md:px-5 py-2" id="passwordConfirm" placeholder="Confirm Password" errors={formData?.errors?.passwordConfirm}
+    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" id="passwordConfirm" placeholder="Confirm Password" errors={formData?.errors?.passwordConfirm}
             disabled={loading} label="passwordConfirm"/>
 
     <button type="submit" class="order-1 m-3 btn btn-md variant-filled-primary group-hover:-translate-y-0.225 duration-200">

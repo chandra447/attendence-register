@@ -3,28 +3,26 @@
   import AdminLogin from "../components/adminLogin.svelte";
   import Register from "../components/register.svelte";
   import UserLogin from "../components/UserLogin.svelte";
+  import { registerActive } from "../stores/data";
 
 export let form;
   
   let isAdmin = false;
   let register = false;
+  registerActive.subscribe(value=>{
+    register=value;
+  })
   function handleToggle(){
     isAdmin = !isAdmin;
   
-  }
-  /**
-   * @param {{ detail: { value: boolean; }; }} event
-   */
-  function handleRegistration(event){
-    register=event.detail.value
   }
 
 </script>
 
 
-<div class=" mx-auto h-dvh p-20 items-center justify-center flex">
+<div class=" mx-auto h-dvh p-10 md:p-20 items-center justify-center flex">
     <div class="flex flex-row items-center justify-center mx-auto card">
-   <div class="w-full md:w-1/2 flex flex-col space-y-4 p-10">
+   <div class="w-full md:w-1/2 flex flex-col space-y-4 p-12 md:p-10">
         <h1 class="h1 mx-auto mb-6  ">
             <span class="bg-gradient-to-br from-blue-500 to-cyan-300 bg-clip-text text-transparent box-decoration-clone tracking-wide ">Dk Stores</span>
         </h1>
@@ -41,12 +39,12 @@ export let form;
         {#if !register}
             {#if isAdmin}
              
-                <AdminLogin isAdmin={isAdmin} on:registered={handleRegistration} formData={form} />
+                <AdminLogin isAdmin={isAdmin} formData={form} />
             {:else} <UserLogin isAdmin={isAdmin} formData={form}/>
             {/if}
         {:else}
         
-            <Register on:registered={handleRegistration} formData={form} />
+            <Register formData={form} />
         {/if}
 
     </div> 
