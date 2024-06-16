@@ -5,11 +5,12 @@ export async function POST({ request,locals })
     const {password_exclude,...supervisor} = formData;
     formData['passwordConfirm'] = formData.password;
     formData['isAdmin'] = false;
+    formData['Owner'] = locals.user.id;
     if (formData.isSupervisor){
       try{
         // Check if the user exists
           const existingUsers = await locals.pb.collection('users').getFullList({
-                filter: `username = "${formData.username}"`
+                filter: `username = "${formData.username}" && Owner="${locals.user.id}"`
           });
           if (existingUsers.length>0){
             return new Response(JSON.stringify({message:"User "+ formData.username +" already exists"}),

@@ -5,7 +5,8 @@ import Employee from "../../components/employee.svelte";
 import { get } from 'svelte/store';
 import { page, updated } from '$app/stores';
 import { popup,ListBox,ListBoxItem } from '@skeletonlabs/skeleton';
-  import { onMount } from 'svelte';
+import { onMount } from 'svelte';
+import { sleep } from '$lib/utils';
  
 
 
@@ -38,6 +39,11 @@ const fetchLedgers = async(newLedgerName=null) =>{
 $:  employees=[];
 
 async function fetchEmployees() {
+
+		console.log('berfore sleep ',selectedLedger.id)
+		await sleep(2000);
+		console.log('after sleep ',selectedLedger.id)
+
 		const response = await fetch(`/employees?register=${selectedLedger.id}`, {
             method: 'GET'
         });
@@ -45,13 +51,19 @@ async function fetchEmployees() {
 		if (response.ok){
 			employees = await response.json();
 			let responseMessage = 'Employees fetched Sucessfully'
+			console.log(employees)
+			console.log('at the end',selectedLedger.id)
 		}else{
 			const error = await response.json();
 			let responseMessage = error.message
 		}
 
 };
-onMount(fetchEmployees)
+onMount(() => {
+  if (ledgers.length > 0) {
+    fetchEmployees();
+  }
+});
 
 async function handleEmployeeAdded(){
 	await fetchEmployees();
@@ -119,36 +131,26 @@ function modalLedger() {
 		
 		<div class="flex flex-row space-x-3 relative mt-2 flex-wrap md:space-x-5 items-center">
 			<label class="label">
-	
-				<select class="select font-bold mt-2 variant-outline-primary input-group bg-slate-400" size="1" bind:value={selectedLedgerindex}
-				on:change={fetchEmployees}>
-					{#if ledgers.length > 0}
-						{#each ledgers as item, index}
-							<option value={index} selected={index === selectedLedgerindex}>{item.name}</option>
-						{/each}
-					{:else}
-						<option value="create">Create a new ledger</option>
-					{/if}
-				</select>
 
-				<!-- <button class="btn variant-filled w-48 justify-between" use:popup={popupCombobox}>
-					<span class="capitalize">{ledgers[selectedLedgerindex].name ?? 'Trigger'}</span>
+				<button class="btn variant-filled w-48 justify-between" use:popup={popupCombobox} >
+					<span class="capitalize">{ledgers.length>0? ledgers[selectedLedgerindex].name : 'No Ledgers'}</span>
 					<span>↓</span>
 				</button>
 
-
+				
+					
+				
 			<div class="card w-48 shadow-xl py-2" data-popup="popupCombobox">
 				<ListBox rounded="rounded-none">
 					{#each ledgers as item,index}
-					<ListBoxItem bind:group={selectedLedgerindex} name="medium" value={index}> {item.name}</ListBoxItem>
+					<ListBoxItem bind:group={selectedLedgerindex} name="medium" value={index} on:click={fetchEmployees}> {item.name}</ListBoxItem>
 					{/each}
 				</ListBox>
 				<div class="arrow bg-surface-100-800-token" />
 			</div>
-					 -->
+		
+			
 					
-	
-				
 			</label>
 			
 

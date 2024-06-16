@@ -29,3 +29,8 @@ export const validateData = async (formData, schema) => {
 		};
 	}
 };
+
+export function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  

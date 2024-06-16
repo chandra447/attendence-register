@@ -54,6 +54,7 @@ async function handleSubmit() {
 async function onFormSubmit(){
 	if ($modalStore[0].response) $modalStore[0].response(formData);
 	await handleSubmit();
+	location.reload()
 }
 
 // Base Classes
