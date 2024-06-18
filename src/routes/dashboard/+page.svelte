@@ -1,5 +1,5 @@
 <script>
-import { getModalStore } from '@skeletonlabs/skeleton';
+import { filter, getModalStore } from '@skeletonlabs/skeleton';
 
 import Employee from "../../components/employee.svelte";
 import { get } from 'svelte/store';
@@ -8,6 +8,9 @@ import { popup,ListBox,ListBoxItem } from '@skeletonlabs/skeleton';
 import { onMount } from 'svelte';
 import { sleep } from '$lib/utils';
 import { triggerRefresh,resetStore } from '../../stores/data';
+import Table from '../../components/table.svelte';
+import {RadioGroup, RadioItem} from '@skeletonlabs/skeleton';
+import { tableFilters } from '../../stores/data';
  
 
 
@@ -116,12 +119,15 @@ function modalLedger() {
 function placeholderArray(placeholderCount) {
     return Array(placeholderCount).fill(null);
   }
-	
+
+
+let selectedFilter = 0;
 
 </script>
 <div class="mt-4 mx-4 bg-surface-200 rounded-lg h-[750px] ">
 	<div class="card-header">
 		<h2 class="h3 mb-4">Hello {data.user.isAdmin? data.user.name :data.user.username} 👋🏻</h2>
+		<!-- New user row -->
 		<div class="flex flex-row space-x-0 md:space-x-5 relative flex-wrap">
 			<div class="input-group input-group-divider grid-cols-[auto_1fr_auto] order-first w-full
 			md:w-1/2">
@@ -146,6 +152,9 @@ function placeholderArray(placeholderCount) {
 			</div>
 
 		</div >
+		<!-- Close new user row -->
+
+		<!-- ledger operations -->
 		
 		<div class="flex flex-row space-x-3 relative mt-2 flex-wrap md:space-x-5 items-center">
 			<label class="label">
@@ -178,6 +187,9 @@ function placeholderArray(placeholderCount) {
 			<button class={'btn btn-sm variant-ghost-error mt-2 md:mt-0 '+
 							(data.user.isAdmin? '': 'hidden')} on:click={()=>{ ledgerOperation='delete';modalLedger();}} >Delete Ledger -</button>
 		</div>
+		<!-- Close ledger operations -->
+		
+
 		
 		
 
@@ -187,6 +199,7 @@ function placeholderArray(placeholderCount) {
 			
 		
 	</div>
+	
 	{#if fetchingEmployees}
 
 			<!-- place holder section -->
@@ -217,14 +230,20 @@ function placeholderArray(placeholderCount) {
 		{:else}
 
 			<section class="p-4 overflow-y-auto ">
-				<div class="flex flex-col mx-auto mt-10 space-y-3 md:mx-20  w-3/4 px-2 over-flow-y-auto h-65
+				<div class="flex flex-col mx-auto mt-10 space-y-5 md:mx-20  w-3/4 px-2 over-flow-y-auto h-65
 								">
-						
-							{#each employees as emp}
-							<Employee status="In shop" duration="00:45" name={emp.Name} />	
-							{/each}
-				
+								<div>
+									<RadioGroup active="variant-filled-primary" hover="hover:variant-soft-primary" gap='gap-2'>
+										{#each tableFilters as filter, index}
+											<RadioItem bind:group={selectedFilter} name="All" value={index}>{filter}</RadioItem>
+									
+										{/each}
+									</RadioGroup>
+								</div>
+							<Table inputEmployees={employees} filterSelected={selectedFilter}/>
+							
 			</section>
+			
 		{/if}
 
 	{/if}
