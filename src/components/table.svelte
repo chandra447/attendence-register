@@ -1,8 +1,11 @@
 
 <script>
+  import { createFilterStore, filterHandler } from "$lib/stores/filter";
+  import { onDestroy } from "svelte";
+  import {RadioGroup, RadioItem} from '@skeletonlabs/skeleton';
 import { tableFilters } from "../stores/data";
 export let inputEmployees;
-export let filterSelected = 0;
+
 // Add additional values 
 
 inputEmployees = inputEmployees.map(employee => ({
@@ -12,28 +15,51 @@ inputEmployees = inputEmployees.map(employee => ({
         disabledCheckout: true,
         transaction: 0
         }));
-//apply the filters
 
 
-$: filteredEmployees = (() => {
-  switch (tableFilters[filterSelected]) {
-    case 'All':
-      return inputEmployees;
-    case 'Absent':
-      return inputEmployees.filter(x => !x.present);
-    case 'Present':
-      return inputEmployees.filter(x => x.present && !x.disabledCheckout);
-    case 'Out-shop':
-      return inputEmployees.filter(x => !x.disabledCheckin && x.present);
-    default:
-      return inputEmployees;
+
+const filterStore = createFilterStore(inputEmployees);
+
+const unsubscribe = filterStore.subscribe((model)=>{
+  filterHandler(model);
+      }
+      );
+
+
+
+
+onDestroy(()=>{
+  unsubscribe();
+})
+
+const handlePresent=(id)=>{
+  //update the emplopyee object
+  const emp = $filterStore.filtered.find(x=> x.id===id);
+  if (emp) {
+    emp.present = !emp.present;
+    emp.disabledCheckin = true;
+    emp.disabledCheckout = false;
+    emp.transaction = 1;
+    $filterStore.trigger = true;
   }
-})();
-$: console.log(filteredEmployees)
+
+}
 
 
 </script>
 
+<div class="flex flex-row">
+ 
+
+  <div>
+    <RadioGroup active="variant-filled-primary" hover="hover:variant-soft-primary" gap='gap-2'>
+      {#each tableFilters as filter, index}
+        <RadioItem bind:group={$filterStore.filter} name="All" value={index}>{filter}</RadioItem>
+    
+      {/each}
+    </RadioGroup>
+  </div>
+</div>
 
 <!-- Responsive Container (recommended) -->
 <div class="table-container border-2 border-slate-600">
@@ -47,18 +73,14 @@ $: console.log(filteredEmployees)
 			</tr>
 		</thead>
 		<tbody>
-			{#each filteredEmployees as row, index}
+			{#each $filterStore.filtered as row, index}
                 <tr>
                     <td class="font-semibold">{row.Name}</td>
                     <td>
                     <label class="label">
                         <button class="btn btn-icon variant-filled-secondary h-8" 
                         disabled={row.transaction === 1} on:click={() => {
-                            row.present = !row.present;
-                            row.disabledCheckin = true;
-                            row.disabledCheckout = false;
-                            row.transaction = 1;
-                           
+                            handlePresent(row.id);
                         }}>
                         {#if row.present}
                             ✅
@@ -74,6 +96,7 @@ $: console.log(filteredEmployees)
                         on:click={() => {
                             row.disabledCheckout = false;
                             row.disabledCheckin = true;
+                            $filterStore.trigger = true;
                             
                          
                         }}>Check-in</button>
@@ -81,6 +104,7 @@ $: console.log(filteredEmployees)
                         on:click={() => {
                             row.disabledCheckout = true;
                             row.disabledCheckin = false;
+                            $filterStore.trigger = true;
                             
                         }}>Check out</button>
                     </div>

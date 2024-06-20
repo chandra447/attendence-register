@@ -121,7 +121,7 @@ function placeholderArray(placeholderCount) {
   }
 
 
-let selectedFilter = 0;
+
 
 </script>
 <div class="mt-4 mx-4 bg-surface-200 rounded-lg h-[750px] ">
@@ -232,15 +232,16 @@ let selectedFilter = 0;
 			<section class="p-4 overflow-y-auto ">
 				<div class="flex flex-col mx-auto mt-10 space-y-5 md:mx-20  w-3/4 px-2 over-flow-y-auto h-65
 								">
-								<div>
+								<!-- <div>
 									<RadioGroup active="variant-filled-primary" hover="hover:variant-soft-primary" gap='gap-2'>
 										{#each tableFilters as filter, index}
 											<RadioItem bind:group={selectedFilter} name="All" value={index}>{filter}</RadioItem>
 									
 										{/each}
 									</RadioGroup>
-								</div>
-							<Table inputEmployees={employees} filterSelected={selectedFilter}/>
+								</div> -->
+							<Table inputEmployees={employees}/>
+						
 							
 			</section>
 			
