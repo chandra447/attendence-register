@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import moment from "moment-timezone";
 
 export const registerActive = writable(false);
 
@@ -15,6 +16,7 @@ export function resetStore() {
   }
 
 
-export const tableFilters = ['All','Absent','Present','Out-shop'];
+export const tableFilters = ['All','Absent','Present','OutShop'];
 
-export const triggerRefreshTable = writable(false);
+
+export const dateFilter = writable(moment.utc().tz('Asia/Kolkata').format('YYYY-MM-DD'));

@@ -10,7 +10,8 @@ import { sleep } from '$lib/utils';
 import { triggerRefresh,resetStore } from '../../stores/data';
 import Table from '../../components/table.svelte';
 import {RadioGroup, RadioItem} from '@skeletonlabs/skeleton';
-import { tableFilters } from '../../stores/data';
+import { tableFilters,dateFilter } from '../../stores/data';
+  import moment from 'moment-timezone';
  
 
 
@@ -61,17 +62,29 @@ const fetchLedgers = async(newLedgerName=null) =>{
 };
 $:  employees=[];
 
+$: selectedDate = moment.utc().tz('Asia/Kolkata').format('YYYY-MM-DD');
+
+// dateFilter.subscribe(value=>{
+// 	if(selectedDate!==value){
+// 		selectedDate = value;
+// 		fetchEmployees();
+// 	}
+// });
+
+// $: console.log('This is with in +page.svelte dashbaord',selectedDate)
+
 async function fetchEmployees() {
 		fetchingEmployees = true;
-		await sleep(2000);
+	
 
-		const response = await fetch(`/employees?register=${selectedLedger.id}`, {
+		const response = await fetch(`/employees?register=${selectedLedger.id}&inputDate=${selectedDate}`, {
             method: 'GET'
         });
 	
 		if (response.ok){
 			employees = await response.json();
 			let responseMessage = 'Employees fetched Sucessfully'
+			console.log(employees)
 		
 		}else{
 			const error = await response.json();
@@ -126,22 +139,9 @@ function placeholderArray(placeholderCount) {
 </script>
 <div class="mt-4 mx-4 bg-surface-200 rounded-lg h-[750px] ">
 	<div class="card-header">
-		<h2 class="h3 mb-4">Hello {data.user.isAdmin? data.user.name :data.user.username} 👋🏻</h2>
-		<!-- New user row -->
-		<div class="flex flex-row space-x-0 md:space-x-5 relative flex-wrap">
-			<div class="input-group input-group-divider grid-cols-[auto_1fr_auto] order-first w-full
-			md:w-1/2">
-				<div class="input-group-shim"><i class="fa-brands fa-searchengin"></i></div>
-				<input type="search" placeholder="Search..." />
-				
-			</div>
-			<!-- <button class="btn variant-filled" use:popup={popupFeatured}>Show Popup</button> -->
-			<div class="flex space-x-3 md:flex-none md:space-x-0">
-				<input type="date" class="btn btn-sm mt-2 md:mt-0 "/>
-						
-				
-				
-				<button  class={'btn btn-md md:btn-xl variant-filled-primary order-last '+
+		<div class="flex space-x-0 relative">
+			<h2 class="h3 mb-4 order-first">Hello {data.user.isAdmin? data.user.name :data.user.username} 👋🏻</h2>
+			<button  class={'btn btn-md md:btn-xl variant-filled-primary order-last '+
 							'md:absolute md:right-0 ' +
 							'mt-2 md:mt-0 '+(data.user.isAdmin? '': 'hidden')} on:click={modalComponentForm}>
 					<span class={'space-x-4 text-xs font-light md:font-md '
@@ -149,9 +149,8 @@ function placeholderArray(placeholderCount) {
 					New User 
 					<i class="fa-regular fa-user"></i></span>
 				</button>
-			</div>
+		</div>
 
-		</div >
 		<!-- Close new user row -->
 
 		<!-- ledger operations -->
