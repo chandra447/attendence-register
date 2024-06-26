@@ -66,23 +66,31 @@ export function sleep(ms) {
 
 
   export function addLogger(data,loggedData){
-
+	
 	return data.map(emp=>{
 		let isCheckedOut = false;
         let hasCheckOutRecord = false;
-		//find all the logs with inTIme as blank from the loggerData(which is an array)
-		let checkedOutData = loggedData.find(x=> x.present===emp.presentid && x.inTime==='');
-		let checkedinData = loggedData.filter((x)=> x.present===emp.presentid && x.inTime!=='');
-		checkedinData = checkedinData.map(x=>{
+		loggedData = loggedData.map(x=>{
 			return {
 				...x,
 				inTime: x.inTime.replace(" ","T"),
 				outTime: x.outTime.replace(" ","T")}
 		})
+		//find all the logs with inTIme as blank from the loggerData(which is an array)
+		let checkedOutData = loggedData.find(x=> x.present===emp.presentid && x.inTime==='');
+		let checkedinData = loggedData.filter((x)=> x.present===emp.presentid && x.inTime!=='');
+		let empLoggedData = checkedinData;
+		
 
 
 		//console.log the latest object in the array checked sort by obj.inTime
-	
+		empLoggedData.sort((a,b)=>moment(a.outTime).diff(moment(b.outTime),"minutes"));
+		empLoggedData = empLoggedData.map(log=>{
+			return {
+				...log,
+				duration: moment(log.inTime).diff(moment(log.outTime),"minutes")
+			}
+		})
 		checkedinData.sort((a,b)=>moment(b.inTime).diff(moment(a.inTime),"minutes"));
 		let latestCheckin = checkedinData[0];
 
@@ -104,7 +112,8 @@ export function sleep(ms) {
 			disabledCheckin: !isCheckedOut,
 			latestCheckoutTime: checkedOutData ? checkedOutData.outTime : (latestCheckin? latestCheckin.outTime : ''),
 			latestCheckinTime: latestCheckin ?latestCheckin.inTime : '',
-			totalLogs: loggedData.filter((x)=> x.present===emp.presentid).length
+			totalLogs: loggedData.filter((x)=> x.present===emp.presentid).length,
+			logData: empLoggedData,
 			// 2024-06-23 05:17:31.028Z
 			//2024-06-23T15:00:00+10:00 this is what i get when i use format
 		}

@@ -1,10 +1,10 @@
 import PocketBase from 'pocketbase';
 import { serializeNonPOJOs } from '$lib/utils';
+import { PUBLIC_POCKETBASE_URL } from '$env/static/public';
+
 
 export const handle = async ({ event, resolve }) => {
-	const url = 'https://extra-luck.pockethost.io/'
-	// 'http://localhost:8090'
-	event.locals.pb = new PocketBase(url);
+	event.locals.pb = new PocketBase(PUBLIC_POCKETBASE_URL);
 	event.locals.pb.authStore.loadFromCookie(event.request.headers.get('cookie') || '');
 
 	if (event.locals.pb.authStore.isValid) {

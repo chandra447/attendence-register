@@ -53,10 +53,10 @@
 <form action="?/login" method="post" class="space-y-2" use:enhance={submitLogin} >
     <input type="hidden" name="isAdmin" value={isAdmin}/>
  
-    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="email" placeholder="Enter Email" disabled={loading}
+    <Input bclass="input px-4 py-3 md:py-1 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="email" placeholder="Enter Email" disabled={loading}
             label="Email" errors={formData?.errors.email} id="email"/>
 
-    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="password" placeholder="Enter Password.." disabled={loading}
+    <Input bclass="input px-4 py-3 md:py-1 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="password" placeholder="Enter Password.." disabled={loading}
             errors={formData?.errors?.password} id="password" label="Password"/>
 
     <label class="label mt-1" for="forgot">Forgot 

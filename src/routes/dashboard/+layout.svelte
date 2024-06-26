@@ -13,7 +13,7 @@
 	 
 	
 </script>
-
+<div class=" h-screen ">
 <AppBar>
 	<svelte:fragment slot="lead">
 		<div class="flex flex-row items-center space-x-1">
@@ -32,6 +32,10 @@
 </AppBar>
 
 <Modal components={modalRegistry}/>
+
 <Toast zIndex="z-[1400]"/>
 
+
 <slot />
+
+</div>

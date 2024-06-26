@@ -58,16 +58,16 @@
     <button type="button"  class="btn btn-sm variant-outline-secondary hover:variant-filled-secondary
                     hover:text-white font-semibold" on:click={handleRegisterStore} >&larr;</button>
 
-    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="text" placeholder="Name" id="name" errors={formData?.errors?.name}
+    <Input bclass="input px-4 py-3 md:py-1  md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="text" placeholder="Name" id="name" errors={formData?.errors?.name}
         disabled={loading} value={formData?.data?.name ?? ''} label='Name'/>
 
-    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="email" placeholder="Enter Email" id="email" errors={formData?.errors?.email}
+    <Input bclass="input px-4 py-3 md:py-1  md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="email" placeholder="Enter Email" id="email" errors={formData?.errors?.email}
             disabled={loading} value={formData?.data?.email ?? '' } label="email"/>
 
-    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="password" id="password" placeholder="Enter Password" errors={formData?.errors?.password}
+    <Input bclass="input px-4 py-3 md:py-1  md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" type="password" id="password" placeholder="Enter Password" errors={formData?.errors?.password}
             disabled = {loading} label="Password"/>
   
-    <Input bclass="input px-6 md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" id="passwordConfirm" placeholder="Confirm Password" errors={formData?.errors?.passwordConfirm}
+    <Input bclass="input px-4 py-3 md:py-1  md:px-5 text-xs md:text-lg placeholder:text-xs md:placeholder:text-md" id="passwordConfirm" placeholder="Confirm Password" errors={formData?.errors?.passwordConfirm}
             disabled={loading} label="passwordConfirm"/>
 
     <button type="submit" class="order-1 m-3 btn btn-md variant-filled-primary group-hover:-translate-y-0.225 duration-200">

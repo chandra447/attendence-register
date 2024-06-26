@@ -22,7 +22,7 @@ export let form;
 
 <div class=" mx-auto h-dvh p-10 md:p-20 items-center justify-center flex">
     <div class="flex flex-row items-center justify-center mx-auto card">
-   <div class="w-full md:w-1/2 flex flex-col space-y-4 p-12 md:p-10">
+   <div class="flex flex-col space-y-4 p-12 md:p-10 min-w-[90vw] md:min-w-[27vw]">
         <h1 class="h1 mx-auto mb-6  ">
             <span class="bg-gradient-to-br from-blue-500 to-cyan-300 bg-clip-text text-transparent box-decoration-clone tracking-wide ">Dk Stores</span>
         </h1>
