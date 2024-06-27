@@ -126,15 +126,14 @@ function placeholderArray(placeholderCount) {
   }
 
 
-
+  const adminDisplay = !data.user.isAdmin? 'hidden' : '';
 </script>
 <div class="mb-4 mt-7 mx-2 bg-surface-200 sm:overflow-hidden  rounded-lg h-[87%] flex flex-col ">
 	<div class="card-header  justify-items-stretch">
 		<div class="flex flex-col space-y-6 mt-7">
 			<div class="grid grid-cols-6 justify-items-stretch mt-3">
 				<h2 class="h3 mb-4 col-span-4">Hello {data.user.isAdmin? data.user.name :data.user.username} 👋🏻</h2>
-				<button  class={'btn btn-md md:btn-xl variant-filled-primary col-start-6 justify-self-end '+
-								+(data.user.isAdmin? 'block': 'hidden')} on:click={modalComponentForm}>
+				<button  class={'btn btn-md md:btn-xl variant-filled-primary col-start-6 justify-self-end '+(adminDisplay)} on:click={modalComponentForm}>
 						<span class={'space-x-4 text-xs font-light md:font-md '
 								}>
 						New User 
