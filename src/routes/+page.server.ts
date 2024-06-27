@@ -4,7 +4,6 @@ import { generateUsername,validateData } from '../lib/utils.js';
 import {loginAdminSchema,loginUserSchema,adminRegistration} from '$lib/schema.js';
 
 
-
 // function sleep(ms) {
 // 	return new Promise(resolve => setTimeout(resolve, ms));
 //   }

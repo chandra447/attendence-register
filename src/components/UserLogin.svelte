@@ -48,7 +48,7 @@
 
 <form action="?/userLogin" method="post" class="space-y-2" use:enhance={handleUserLogin}>
     <input type="hidden" name="isAdmin" value={isAdmin}/>
-        <Input bclass="input px-10 md:px-5" type="text" placeholder="username.." id="username" disabled={loading} label='User name'
+        <Input bclass="input px-10 md:px-3 " type="text" placeholder="username.." id="username" disabled={loading} label='User name'
         errors={formData?.errors?.username} value={formData?.data?.username ?? ''}/>
      
 
