@@ -1,4 +1,4 @@
-const { randomBytes } = await import('node:crypto');
+import CryptoJS from 'crypto-js';
 import moment from 'moment-timezone';
 
 export const serializeNonPOJOs = (obj) => {
@@ -6,7 +6,7 @@ export const serializeNonPOJOs = (obj) => {
 };
 
 export const generateUsername = (name) => {
-	const id = randomBytes(2).toString('hex');
+	const id = CryptoJS.lib.WordArray.random(2).toString();
 	return `${name.slice(0, 5)}${id}`;
 };
 

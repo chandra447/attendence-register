@@ -5,7 +5,8 @@
   import UserLogin from "../components/UserLogin.svelte";
   import { registerActive } from "../stores/data";
 
-export let form;
+
+  export let form;
   
   let isAdmin = false;
   let register = false;

@@ -11,9 +11,12 @@
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.1.0",
     "@skeletonlabs/skeleton": "2.10.0",
     "@skeletonlabs/tw-plugin": "0.4.0",
     "@sveltejs/adapter-auto": "^3.0.0",
+    "@sveltejs/adapter-netlify": "^4.2.1",
+    "@sveltejs/adapter-static": "^3.0.2",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@tailwindcss/forms": "^0.5.7",
@@ -34,9 +37,13 @@
   },
   "type": "module",
   "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/ios": "^6.1.0",
     "@floating-ui/dom": "^1.6.5",
     "@vincjo/datatables": "^1.14.10",
     "cookie": "^0.6.0",
+    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.11",
     "dayjs-plugin-utc": "^0.1.2",
     "dayjs-timezone-iana-plugin": "^0.1.0",
