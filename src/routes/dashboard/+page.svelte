@@ -219,8 +219,8 @@ function placeholderArray(placeholderCount) {
 			<div class="px-1 md:mx-2 min-w-[60vw] mt-2 md:mt-8  min-h-[75%] mb-2 md:h-[80%]">
 				
 								
-							<Table inputEmployees={employees}/>
-				
+							<Table inputEmployees={employees} isAdmin={data.user.isAdmin}/>
+							
 						
 							
 			</div>

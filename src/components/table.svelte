@@ -11,7 +11,8 @@
   import { getToastStore } from '@skeletonlabs/skeleton';
   import { Drawer, getDrawerStore } from '@skeletonlabs/skeleton';
   // import type { DrawerSettings, DrawerStore } from '@skeletonlabs/skeleton';
-
+export let isAdmin;
+const adminDisplay = !isAdmin? 'hidden' : '';
 const drawerStore = getDrawerStore();
 const toastStore = getToastStore();
 let background = 'variant-filled-success';
@@ -254,7 +255,7 @@ async function purgeEmployees(){
 
 <div class="flex flex-col space-y-6 md:space-y-10 h-[98%] md:h-[95%] px-1 md:px-4">
     <div class={selectedEmployees.length===0? 'hidden': 'md:block hidden' } >
-      <button class='variant-filled-error text-wrap rounded-lg px-4 py-2 break-words w-[130px] font-mono text-sm'
+      <button class={'variant-filled-error text-wrap rounded-lg px-4 py-2 break-words w-[130px] font-mono text-sm '+ adminDisplay}
                 on:click={purgeEmployees}>
         Delete Employees {selectedEmployees.length}
       </button>
@@ -295,7 +296,7 @@ async function purgeEmployees(){
       <table class={'table table-hover hidden md:block'}>
         <thead>
           <tr>
-            <th style="padding-right: 0px;"><input type="checkbox" checked={headSelected} on:click={onHeadSelected}></th>
+            <th style="padding-right: 0px;" class={adminDisplay}><input type="checkbox" checked={headSelected} on:click={onHeadSelected}></th>
             <th>Name</th>
             <th>Present?</th>
             <th>Options</th>
@@ -305,8 +306,8 @@ async function purgeEmployees(){
         </thead>
         <tbody>
           {#each matchedEmployees as row, index}
-                    <tr>
-                      <td class="pr-0"  ><input type="checkbox" class=" accent-fuchsia-400" checked={selectedEmployees.find((emp) => emp === row.id)? true||headSelected: false||headSelected} on:click={onChildSelect(row.id)}/></td>
+                    <tr >
+                      <td class={'pr-0 '+adminDisplay}  ><input type="checkbox" class=" accent-fuchsia-400" checked={selectedEmployees.find((emp) => emp === row.id)? true||headSelected: false||headSelected} on:click={onChildSelect(row.id)}/></td>
 
                         <td class="font-semibold">
                         <div class="flex flex-col">
@@ -376,13 +377,13 @@ async function purgeEmployees(){
               </span>
         </div>
         <div class="flex flex-row space-x-4">
-          <button class="btn variant-filled-error btn-md w-[20%] py-1 rounded-md mx-2" on:click={onHeadSelected}>Select All</button>
+          <button class={'btn variant-filled-error btn-md w-[20%] py-1 rounded-md mx-2 '+ adminDisplay} on:click={onHeadSelected}>Select All</button>
           <button class={'btn variant-filled-error btn-md w-[20%] py-1 rounded-md mx-2 text-wrap text-xs '+ (selectedEmployees.length===0? 'hidden': 'block md:hidden' )} on:click={purgeEmployees}>Delete {selectedEmployees.length} Employees</button>
         </div>
         {#each matchedEmployees as row,index}
               <div class="md:hidden  w-[95%] mx-auto relative bg-gray-400 p-4 rounded-md grid grid-rows-2">
             
-                    <input type="checkbox" class="absolute top-1 left-2 accent-pink-500/20" checked={selectedEmployees.find((emp) => emp === row.id)? true||headSelected: false||headSelected} on:click={onChildSelect(row.id)}/>
+                    <input type="checkbox" class={'absolute top-1 left-2 accent-pink-500/20 '+ adminDisplay} checked={selectedEmployees.find((emp) => emp === row.id)? true||headSelected: false||headSelected} on:click={onChildSelect(row.id)}/>
                     <div class="flex flex-row  mb-1 mt-1">
                       <h1 class="h3 font-semibold row-span-1 mt-1">{row.Name}</h1>
                         <button class="btn btn-md ml-2 rounded-lg px-2 py-1 variant-filled-secondary text-xs "disabled={row.transaction === 1 || currentpersistedDate!==inputDate || dataRefresh} on:change={handleUpdates(row.id,'present')}>
