@@ -1,5 +1,4 @@
-<script >
-
+<script>
 
 	// Stores
 	import { getModalStore } from '@skeletonlabs/skeleton';
@@ -76,18 +75,12 @@
 	}
 
 	// We've created a custom submit function to pass the response and close the modal.
-<<<<<<< Updated upstream
-	function onFormSubmit(): void {
+	function onFormSubmit() {
 		if ($modalStore[0].response) {
 			formData['register'] = $modalStore[0]? $modalStore[0].meta.currentCollection.id : '';
 			handleSubmit();
 			$modalStore[0].response(formData);
 	}
-=======
-	function onFormSubmit() {
-		if ($modalStore[0].response) $modalStore[0].response(formData);
-		handleSubmit();
->>>>>>> Stashed changes
 		
 		}
 	
@@ -98,14 +91,11 @@
 	const cForm = 'border border-surface-500 p-4 space-y-4 rounded-container-token';
 
 	$: isValidPin = formData.password.length === 5;
-<<<<<<< Updated upstream
 	function togglepin(){
 		
 		formData.isSupervisor = !formData.isSupervisor;
 		
 	}
-=======
->>>>>>> Stashed changes
 </script>
 
 <!-- @component This example creates a simple form modal. -->
