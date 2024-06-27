@@ -8,7 +8,6 @@ import { sleep } from '$lib/utils';
 import { triggerRefresh,resetStore } from '../../stores/data';
 import Table from '../../components/table.svelte';
 import {RadioGroup, RadioItem} from '@skeletonlabs/skeleton';
-import { tableFilters,dateFilter } from '../../stores/data';
   import moment from 'moment-timezone';
 
  
@@ -159,7 +158,7 @@ function placeholderArray(placeholderCount) {
 				<div class="card w-48 shadow-xl py-2" data-popup="popupCombobox">
 					<ListBox rounded="rounded-none">
 						{#each ledgers as item,index}
-						<ListBoxItem bind:group={selectedLedgerindex} name="medium" value={index} on:click={() => handleItemClick(index)}> {item.name}</ListBoxItem>
+						<ListBoxItem bind:group={selectedLedgerindex} name="ledger" value={index} on:click={() => handleItemClick(index)}> {item.name}</ListBoxItem>
 						{/each}
 					</ListBox>
 					<div class="arrow bg-surface-100-800-token" />

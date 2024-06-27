@@ -27,7 +27,7 @@ export async function updateAttendance(data) {
 
         if (response.ok) {
             const employees = await response.json();
-            console.log('Employees fetched successfully:', employees);
+        
             return employees;
         } else {
             const error = await response.json();

@@ -283,7 +283,7 @@ async function purgeEmployees(){
 
 
     <!-- Responsive Container (recommended) -->
-    <div class="shadow-md shadow-gray-700 md:border-2 rounded-md relative h-full pb-2  overflow-auto md:scrollbar  md:scrollbar-thumb-slate-500 md:scrollbar-track-slate-300 md:scrollbar-w-6 md:scrollbar-h-2  no-scrollbar  ">
+    <div class={'shadow-md shadow-gray-700 md:border-2 rounded-md h-full pb-2  overflow-auto md:scrollbar  md:scrollbar-thumb-slate-500 md:scrollbar-track-slate-300 md:scrollbar-w-6 md:scrollbar-h-2  no-scrollbar  '+ +(dataRefresh? 'relative': '')}>
       <div class={'absolute right-3 z-20 top-0 '+(dataRefresh? 'block': 'hidden')}> <span class={'animate-spin inline-block '}>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={0.9} stroke="currentColor" class="h-6 w-6">
           <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -369,7 +369,7 @@ async function purgeEmployees(){
       </table>
       <div class="flex flex-col space-y-5 md:hidden relative h-full">
        
-        <div class={'absolute right-3 z-20 top-0 '+(dataRefresh? 'block': 'hidden')}> <span class={'animate-spin inline-block '}>
+        <div class={'absolute right-3 top-0 '+(dataRefresh? 'block': 'hidden')}> <span class={'animate-spin inline-block '}>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={0.9} stroke="currentColor" class="h-6 w-6">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
@@ -386,7 +386,7 @@ async function purgeEmployees(){
                     <input type="checkbox" class={'absolute top-1 left-2 accent-pink-500/20 '+ adminDisplay} checked={selectedEmployees.find((emp) => emp === row.id)? true||headSelected: false||headSelected} on:click={onChildSelect(row.id)}/>
                     <div class="flex flex-row  mb-1 mt-1">
                       <h1 class="h3 font-semibold row-span-1 mt-1">{row.Name}</h1>
-                        <button class="btn btn-md ml-2 rounded-lg px-2 py-1 variant-filled-secondary text-xs "disabled={row.transaction === 1 || currentpersistedDate!==inputDate || dataRefresh} on:change={handleUpdates(row.id,'present')}>
+                        <button class="btn btn-md ml-2 rounded-lg px-2 py-1 variant-filled-secondary text-xs "disabled={row.transaction === 1 || currentpersistedDate!==inputDate || dataRefresh} on:click={handleUpdates(row.id,'present')}>
                           {#if row.present}
                               <span> 
                                 {#if loadingStates.attendenceLoading && row.id===loadingStates.id}
