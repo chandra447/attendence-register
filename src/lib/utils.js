@@ -40,6 +40,9 @@ export function sleep(ms) {
         let isPresent = false;
         let presentId = '';
         let hasAttendanceRecord = false;
+		let presentUpdated = "None";
+		let transaction = 0;
+		let createdDate = "None";
 
         if (emp.expand && emp.expand.attendance_via_employee) {
             const attendances = emp.expand.attendance_via_employee;
@@ -50,6 +53,13 @@ export function sleep(ms) {
                 hasAttendanceRecord = true;
                 isPresent = todayAttendance.present;
                 presentId = todayAttendance.id;
+				createdDate = todayAttendance.date;
+				if (isPresent===false){
+					transaction = 2
+					presentUpdated = todayAttendance.updated;
+				   }else{
+					   transaction = hasAttendanceRecord ? (isPresent ? 1 : 0) : 0
+				   }
             }
         }
 
@@ -57,7 +67,9 @@ export function sleep(ms) {
             ...emp,
             present: isPresent,
             presentid: presentId,
-            transaction: hasAttendanceRecord ? (isPresent ? 1 : 0) : 0,
+			presentUpdatedAt: presentUpdated,
+			presentAt: createdDate,
+            transaction: transaction,
             disabledCheckout: !isPresent || !hasAttendanceRecord,
             disabledCheckin: isPresent || !hasAttendanceRecord
         };
@@ -121,3 +133,62 @@ export function sleep(ms) {
 	})
 
   }
+
+  export function convertMinutesToHoursAndMinutes(minutes) {
+
+	if (typeof minutes !== 'number' || minutes < 0 || !Number.isInteger(minutes)) {
+	  return '0 minutes';
+	}
+  
+	const hours = Math.floor(minutes / 60);
+	const remainingMinutes = minutes % 60;
+  
+	let result = '';
+  
+	if (hours > 0) {
+	  result += `${hours} hr${hours !== 1 ? 's' : ''}`;
+	}
+  
+	if (remainingMinutes > 0) {
+	  if (result.length > 0) result += ' ';
+	  result += `${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''}`;
+	}
+  
+	if (result.length === 0) {
+	  result = '0 minutes';
+	}
+  
+	return result;
+  }
+
+  export function calculateString(milliTime){
+  
+	let hours = Math.floor(milliTime/(1000 * 60*60));
+	let minutes =Math.floor(milliTime/ (1000*60)%60);
+	let seconds = Math.floor(milliTime/1000%60);
+	let milliseconds = Math.floor(milliTime/1000 /10);
+
+	let shours = String(hours).padStart(2,"0");
+	let sminutes = String(minutes).padStart(2,"0");
+	let sseconds = String(seconds).padStart(2,"0");
+
+
+	return `${shours}:${sminutes}:${sseconds}`
+
+}
+export async function fetchStartDate(ledgerid){
+	const response = await fetch(`/startDay?register=${ledgerid}`,{method:'GET'})
+	if (response.ok){
+		let startLogs = await response.json();
+		
+		let responseMessage = 'Register logs fetched successfully'	
+		let startTime = startLogs
+
+		return startLogs
+
+	}else{
+			const error = await response.json();
+			let responseMessage = error.message
+		}
+	return []
+}

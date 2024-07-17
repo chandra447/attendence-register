@@ -1,6 +1,6 @@
 import { serializeNonPOJOs } from '$lib/utils.js';
 import { redirect,error } from '@sveltejs/kit';
-
+import moment from 'moment-timezone';
 
 export const load = async ({ locals }) => {
 	if (!locals.pb.authStore.isValid) {
@@ -46,9 +46,31 @@ export const load = async ({ locals }) => {
 			throw error(err.status, err.message);
 		}
 	};
+	const getStartDate = async (ledgerid) =>{
+		let localUtcStartDay = moment.tz('Asia/Kolkata').startOf('day').utc().toISOString().replace("T"," ");
+
+		try {
+			const ledgers = serializeNonPOJOs(
+				await locals.pb.collection('StartLedger').getFullList({
+					filter: `StartDateTime > "${localUtcStartDay}" && register.id="${ledgerid}"`,
+					sort: "-created",
+				})
+			);
+			return ledgers
+		} catch (err) {
+			console.log("Error:", err);
+			return [];
+		}
+	}
 
 	const ledgers = await getLedgers();
-	return { ledgers };
+	let startTime = 'None';
+	
+	if (ledgers.length>0){
+	let id = ledgers[0].id;
+	
+	startTime = await getStartDate(ledgers[0].id)
+	}
+	return { ledgers,startTime };
 };
-
 

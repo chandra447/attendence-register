@@ -2,7 +2,7 @@
 <script>
   import {RadioGroup, RadioItem} from '@skeletonlabs/skeleton';
   import { tableFilters } from "../stores/data";
-  import { sleep } from "$lib/utils";
+  import { sleep,convertMinutesToHoursAndMinutes, calculateString } from "$lib/utils";
   import Spinner from "./spinner.svelte";
   import { getEmployeesInterval,updateAttendance,currentpersistedDate,deleteEmployees } from '$lib/curd';
   import Timer from './timer.svelte';
@@ -10,8 +10,13 @@
   import { dateFilter } from '../stores/data';
   import { getToastStore } from '@skeletonlabs/skeleton';
   import { Drawer, getDrawerStore } from '@skeletonlabs/skeleton';
+
+
   // import type { DrawerSettings, DrawerStore } from '@skeletonlabs/skeleton';
 export let isAdmin;
+export let startTime;
+export let inputEmployees;
+$: selectedStartTime = startTime==="None"? true: false;
 const adminDisplay = !isAdmin? 'hidden' : '';
 const drawerStore = getDrawerStore();
 const toastStore = getToastStore();
@@ -27,13 +32,41 @@ function handleDisplayLogs(row){
 	rounded: 'rounded-xl',
   height: 'h-[50vh]',
   duration: 300,
-  meta: {Name:row.Name,logs:row.logData ? row.logData: []},
+  meta: {Name:row.Name,logs:row.logData ? row.logData: [],
+        lastcheckout:row.latestCheckoutTime? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):'None',
+        presentUpdatedAt:row.presentUpdatedAt!=="None"? moment.utc(row.presentUpdatedAt.replace(" ","T")).tz('Asia/Kolkata').format('HH:mm:ss'):'None',
+        disabledCheckin:row.disabledCheckin,
+        presentAt: row.presentAt !== "None" 
+                  ? moment.utc(row.presentAt.replace(" ", "T")).tz('Asia/Kolkata')
+                  : 'None',
+      },
   position: 'right',
 
 };
 drawerStore.open(drawerSettings);
 }
-export let inputEmployees;
+function totalDuration(logData,additional){
+
+  if (logData===undefined){
+    return '0 mins'
+
+  }
+  let totalDurationVariable = logData.reduce(
+      (sum,item)=> {
+              return (sum + (item.duration || 0));
+                 }, 0)
+  if (additional!=="None"){
+       
+    
+    let newDuration = totalDurationVariable+
+                      Math.abs(
+                        moment.tz(additional, 'YYYY/MM/DD HH:mm:ss', 'Asia/Kolkata')
+                        .diff(moment().tz('Asia/Kolkata'),"minutes").valueOf())
+    return convertMinutesToHoursAndMinutes(newDuration)
+  }
+  return convertMinutesToHoursAndMinutes(totalDurationVariable)
+}
+
 const triggertoast=(/** @type {string} */ tmessage, background)=>{
         let t = {
         message: tmessage,
@@ -120,27 +153,39 @@ async function handleUpdates(id, action) {
       case 'present':
         loadingStates.attendenceLoading = true;
         let presentResponse = await updateAttendance({ employee: emp.id, present: !emp.present, todo: 'attendance',Name:emp['Name'] });
-        await handleTriggerToast(presentResponse,emp.Name,'Attendance');
+       
         break;
+
+      case 'leave':
+      loadingStates.attendenceLoading = true;
+      let absentResponse = await updateAttendance({ id: emp.presentid, present: !emp.present, todo: 'leave',Name:emp['Name'] });
+      await handleTriggerToast(absentResponse,emp.Name,'Left');
+      //complete any open checkouts
+      dataRefresh = true;
+      if (emp.disabledCheckin==false && emp.disabledCheckout==true){
+        let leaveCheckin= await updateAttendance({ present: emp['presentid'], todo: 'checkin' ,Name:emp['Name']});
+      }
+
+      break;
         
       case 'checkin':
         dataRefresh = true;
         let checkinResponse= await updateAttendance({ present: emp['presentid'], todo: 'checkin' ,Name:emp['Name']});
-        await handleTriggerToast(checkinResponse,emp.Name,'checkin');
+        
 
         break;
 
       case 'checkout':
       dataRefresh = true;
         let checkoutResponse = await updateAttendance({ present: emp['presentid'], todo: 'checkout',Name:emp['Name'] });
-        await handleTriggerToast(checkoutResponse,emp.Name,'checkout');
+       
         break;
         
       default:
         console.error('Unknown action:', action);
         return;
     }
-    sleep(1000);
+   
     const updatedEmployees = await getEmployeesInterval({ interval: 5, register: emp.register,retrieveDate:inputDate });
    
     // Update the inputEmployees array with the fresh data
@@ -212,10 +257,12 @@ async function purgeEmployees(){
 	{#if $drawerStore.id === 'example-3'}
 		<!-- (show 'example-1' contents) -->
      <div class="grid grid-row-6 my-10 ">
-      <h1 class="h1 underline mx-auto mt-5 bg-gradient-to-br from-red-500 to-green-300 bg-clip-text text-transparent box-decoration-clone">
-        {$drawerStore.meta.Name}<hr class="p-0.75 bg-gradient-to-br from-red-500 to-green-300 "></h1>
+      <div class="mx-auto mt-5">
+      <h1 class="h1   bg-gradient-to-br from-red-500 to-green-300 bg-clip-text text-transparent box-decoration-clone">
+        {$drawerStore.meta.Name}</h1>
+        <p class="mt-1"><span class="font-semibold">Start time: </span>{$drawerStore.meta.presentAt!=="None"? $drawerStore.meta.presentAt.format('h:mm'):'Not Started'}</p></div>
         <div class="p-5  row-start-3 mt-10">
-          {#if $drawerStore.meta.logs.length>0 }
+          {#if $drawerStore.meta.logs.length>0 || $drawerStore.meta.lastcheckout!=='None'}
               <table class="table-fixed w-full overflow-hidden rounded-lg ">
                 <thead class="bg-slate-500">
                   <tr class="">
@@ -226,20 +273,24 @@ async function purgeEmployees(){
                 </thead>
                 <tbody>
                   {#each $drawerStore.meta.logs as log}
+                 
                   <tr>
-                    <td class="border border-gray-300 p-1 text-center">{moment.utc(log.outTime).tz('Asia/Kolkata').format('HH:mm')}</td>
-                    <td class="border border-gray-300 p-1 text-center">{moment.utc(log.inTime).tz('Asia/Kolkata').format('HH:mm')}</td>
-                    <td class="border border-gray-300 p-1 text-center">{log.duration}</td>
+                    <td class="border border-gray-300 p-1 text-center">{moment.utc(log.outTime).tz('Asia/Kolkata').format('h:mm')}</td>
+                    <td class="border border-gray-300 p-1 text-center">{moment.utc(log.inTime).tz('Asia/Kolkata').format('h:mm')}</td>
+                    <td class="border border-gray-300 p-1 text-center">{convertMinutesToHoursAndMinutes(log.duration)}</td>
                   </tr>
                   {/each}
+                 {#if $drawerStore.meta.presentUpdatedAt==="None" && $drawerStore.meta.disabledCheckin==false}
+                  <tr class=" bg-gradient-to-br from-red-200 to-red-500">
+                    <td class="border border-gray-300 p-1 text-center">{moment($drawerStore.meta.lastcheckout,'YYYY/MM/DD HH:mm:ss').format('h:mm')}</td>
+                    <td class="border border-gray-300 p-1 text-center">00:00</td>
+                    <td class="border border-gray-300 p-1 text-center">{convertMinutesToHoursAndMinutes(Math.abs(moment($drawerStore.meta.lastcheckout).diff(moment().utc().tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm'),"minutes").valueOf()))}</td>
+                  </tr>
+                  {/if}
                   
                   <tr>
                     <td class="border border-gray-300 p-2 text-left" colspan="2">Total</td>
-                    <td class="border border-gray-300 p-2 text-center font-semibold">{$drawerStore.meta.logs.reduce(
-                                                                                        (accumulator,currentObject)=> {
-                                                                                            return accumulator + (currentObject.duration || 0);
-                                                                                          }, 0
-                    )}</td>
+                    <td class="border border-gray-300 p-2 text-center font-semibold">{totalDuration($drawerStore.meta.logs,($drawerStore.meta.presentUpdatedAt==="None" && $drawerStore.meta.disabledCheckin==false)? $drawerStore.meta.lastcheckout:"None")}</td>
                   </tr>
                 </tbody>
               </table>
@@ -263,7 +314,7 @@ async function purgeEmployees(){
     <div class="grid grid-cols-3 md:grid-cols-6 grid-rows-1 md:grid-rows-1 " style="margin-top: 5px;">
     
       <div class="col-span-3">
-        <RadioGroup active="variant-filled-primary" hover="hover:variant-soft-primary" gap='gap-2'>
+        <RadioGroup active="variant-filled-primary" hover="hover:variant-soft-primary" gap='gap-2' padding="px-2 md:px-4">
           {#each tableFilters as filter, index}
             <RadioItem bind:group={filterSelected} name="All" value={index}><span class="text-xs md:text-base">{filter} </span>
                 <span class="text-xs text-opacity-85 align-baseline">({countFilters[filter]})</span></RadioItem>
@@ -274,7 +325,7 @@ async function purgeEmployees(){
         
       <div class={'flex flex-row col-span-3 space-x-5 p-1 mt-2 md:mt-0'}>
         <input type="search" placeholder="Search..." 
-        class="placeholder:text-xs placeholder:opacity-60 
+        class="placeholder:text-xs placeholder:opacity-60
         rounded-lg focus:rounded-lg input" bind:value={searchTerm}/>
         <input type="date" class="rounded-md input text-sm" bind:value={inputDate} on:change={handleUpdateDate}/>
       </div>
@@ -320,8 +371,9 @@ async function purgeEmployees(){
                         </td>
                         <td class="table-cell-fit">
                         <label class="label">
+                          <div class="flex flex-row space-x-1">
                           <button class="btn btn-icon variant-filled-secondary h-8" 
-                          disabled={row.transaction === 1 || currentpersistedDate!==inputDate || dataRefresh} on:click={handleUpdates(row.id,'present')}>
+                          disabled={row.transaction >= 1 || currentpersistedDate!==inputDate || dataRefresh || row.present || selectedStartTime} on:click={handleUpdates(row.id,'present')}>
                           
                           {#if row.present}
                               <span> 
@@ -342,21 +394,31 @@ async function purgeEmployees(){
                             {/if} 
                             
                           </button>
+                          <button class="btn btn-icon variant-filled-error h-8" 
+                          disabled={row.transaction !== 1 || selectedStartTime || currentpersistedDate!==inputDate } on:click={handleUpdates(row.id,'leave')}>
+                          👋🏻  
+                          </button>
+                        </div>
                             
                         </label>
                         </td>
                         <td class="table-cell-fit">
                         <div class="flex flex-row space-x-2">
-                            <button class="btn btn-sm variant-filled-success" disabled={row.disabledCheckin || currentpersistedDate!==inputDate || dataRefresh}
-                            on:click={handleUpdates(row.id,'checkin')}>Check-in</button>
-                            <button class="btn btn-sm variant-ghost-error" disabled={row.disabledCheckout || currentpersistedDate!==inputDate || dataRefresh}
-                            on:click={handleUpdates(row.id,'checkout')}>Check out</button>
+                            <button class="btn variant-filled-success py-4 md:py-3 px-4 rounded-xl text-xs overflow-hidden whitespace-nowrap text-ellipsis "
+                                    disabled={row.disabledCheckin || currentpersistedDate!==inputDate || dataRefresh || selectedStartTime}
+                                    on:click={handleUpdates(row.id,'checkin')}>Checkin</button>
+                            <button class="btn variant-ghost-error py-4 md:py-3 px-4 rounded-xl text-xs overflow-hidden whitespace-nowrap text-ellipsis "
+                                 disabled={row.disabledCheckout || currentpersistedDate!==inputDate || dataRefresh || selectedStartTime}
+                                  on:click={handleUpdates(row.id,'checkout')}>Check out</button>
                         </div>
                         </td>
                         <td>
-                          <p class="text-xs opacity-80 tracking-wide">
+                          <p class="text-xs opacity-80 tracking-normal">
                           Total Logs: {row.totalLogs? row.totalLogs : 0}<button on:click={handleDisplayLogs(row)} class="p-2 ml-2 transition duration-150 ease-out hover:ease-in hover:variant-filled-secondary hover:text-white hover:font-bold rounded-full border border-slate-700 inline-block ">&rarr;</button><br/>
-                          <span class="font-semibold text-violet-700">Last Checkout</span>: {row.latestCheckoutTime? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm'):'None'}
+                          <span class="font-semibold text-violet-700">Total</span>: {totalDuration(row.logData,(row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None")}
+                          {#if row.present===false && row.presentUpdatedAt!=="None"}
+                          <span class={"font-semibold text-amber-700 text-sm "+ row.present? 'block':'hidden'}>👋🏻 &rarr; {moment.utc(row.presentUpdatedAt.replace(" ","T")).tz('Asia/Kolkata').format('HH:mm')}</span>
+                          {/if}
                           </p>
                           
                         </td>
@@ -384,9 +446,14 @@ async function purgeEmployees(){
               <div class="md:hidden  w-[95%] mx-auto relative bg-gray-400 p-4 rounded-md grid grid-rows-2">
             
                     <input type="checkbox" class={'absolute top-1 left-2 accent-pink-500/20 '+ adminDisplay} checked={selectedEmployees.find((emp) => emp === row.id)? true||headSelected: false||headSelected} on:click={onChildSelect(row.id)}/>
-                    <div class="flex flex-row  mb-1 mt-1">
-                      <h1 class="h3 font-semibold row-span-1 mt-1">{row.Name}</h1>
-                        <button class="btn btn-md ml-2 rounded-lg px-2 py-1 variant-filled-secondary text-xs "disabled={row.transaction === 1 || currentpersistedDate!==inputDate || dataRefresh} on:click={handleUpdates(row.id,'present')}>
+                    <div class="grid grid-cols-4  mb-1 mt-1 space-y-2">
+                      <div class="col-start-1 col-span-1 overflow-hidden text-xs sm:text-sm break-words hyphens-auto max-w-[150px] my-auto  ">{row.Name}</div>
+                      <div class={'mr-auto mt-1 ml-3 text-red-700 p-1 text-xs col-start-2 col-span-1 '+(row.disabledCheckin? 'hidden' : 'block')}>
+                        <Timer startTime={row.latestCheckoutTime? row.latestCheckoutTime: moment()} setid={row.id}/>
+                      </div> 
+                        <div class="flex flex-row space-x-1 col-start-3 col-span-1">
+                        <button class="btn px-4 ml-6 rounded-xl   variant-filled-secondary text-xs text-ellipsis overflow-hidden h-7 "
+                          disabled={row.transaction >= 1 || currentpersistedDate!==inputDate || dataRefresh || selectedStartTime} on:click={handleUpdates(row.id,'present')}>
                           {#if row.present}
                               <span> 
                                 {#if loadingStates.attendenceLoading && row.id===loadingStates.id}
@@ -405,19 +472,29 @@ async function purgeEmployees(){
                             </span>
                             {/if} 
                         </button>
-                        <div class={'mr-auto mt-1 ml-3 text-red-700 p-1 '+(row.disabledCheckin? 'hidden' : 'block')}>
-                          <Timer startTime={row.latestCheckoutTime? row.latestCheckoutTime: moment()} setid={row.id}/>
-                        </div> 
-                      <button class="justify-end ml-auto align-top rounded-full variant-filled-secondary p-1" on:click={handleDisplayLogs(row)}>&rarr;</button>
+                        <button class="btn px-4 ml-6 rounded-xl col-start-3 col-span-1  variant-filled-error text-xs text-ellipsis overflow-hidden h-7 hover:variant-filled-error "
+                            disabled={row.transaction !== 1 || selectedStartTime|| currentpersistedDate!==inputDate} on:click={handleUpdates(row.id,'leave')}
+                            >
+                          👋🏻
+                        </button></div>
+                        
+                        
+                      <button class="justify-end ml-auto align-top rounded-full variant-filled-secondary col-start-4  mr-1 text-ellipsis overflow-hidden h-7 px-2" on:click={handleDisplayLogs(row)}>&rarr;</button>
                     </div>
-                    <div class="flex flex-row row-span-1 justify-end">
+                    
+                    <div class="flex flex-row row-span-1 justify-end my-auto">
                       <p class="text-xs opacity-80 tracking-wide mr-auto mt-2">
                         Total Logs: {row.totalLogs? row.totalLogs : 0}<br/>
-                        <span class=" mt-1 font-semibold text-violet-700">Last Checkout</span>: {row.latestCheckoutTime? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm'):'None'}
+                        <span class=" text-violet-700 text-xs">Total</span>:{totalDuration(row.logData,(row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None")}
                         </p>
-                      <div class="order-last place-items-end">
-                        <button class="btn rounded-lg px-3 py-2 variant-filled-success min-w-22  text-wrap" on:click={handleUpdates(row.id,'checkin')} disabled={row.disabledCheckin || currentpersistedDate!==inputDate || dataRefresh}>checkin</button>
-                        <button class="btn rounded-lg px-3 py-2 variant-filled-error min-w-22 text-wrap" on:click={handleUpdates(row.id,'checkout')} disabled={row.disabledCheckout || currentpersistedDate!==inputDate || dataRefresh}>checkout</button>
+                      <div class="order-last grid grid-cols-2 items-center space-x-1">
+                        <button class="col-start-1 btn rounded-xl px-4 py-2  variant-filled-success min-w-18 text-xs overflow-hidden whitespace-nowrap  text-ellipsis"
+                         on:click={handleUpdates(row.id,'checkin')} 
+                        disabled={row.disabledCheckin || currentpersistedDate!==inputDate || dataRefresh || selectedStartTime}>checkin</button>
+                        
+                        <button class=" col-start-2 btn rounded-xl px-4 py-2  variant-filled-error min-w-18 text-xs overflow-hidden whitespace-nowrap  text-ellipsis" 
+                        on:click={handleUpdates(row.id,'checkout')} 
+                          disabled={row.disabledCheckout || currentpersistedDate!==inputDate || dataRefresh || selectedStartTime}>checkout</button>
                       </div>
                 
               </div>

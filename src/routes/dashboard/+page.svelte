@@ -4,8 +4,8 @@ import { get } from 'svelte/store';
 import { page, updated } from '$app/stores';
 import { popup,ListBox,ListBoxItem } from '@skeletonlabs/skeleton';
 import { onMount } from 'svelte';
-import { sleep } from '$lib/utils';
-import { triggerRefresh,resetStore } from '../../stores/data';
+import { sleep,fetchStartDate } from '$lib/utils';
+import { triggerRefresh,resetStore,triggerRefreshTime,restoreTime } from '../../stores/data';
 import Table from '../../components/table.svelte';
 import {RadioGroup, RadioItem} from '@skeletonlabs/skeleton';
   import moment from 'moment-timezone';
@@ -78,8 +78,37 @@ async function fetchEmployees() {
 		fetchingEmployees = false;
 
 };
+$: startTime = get(page).data.startTime
+$: startTimeDisplay = startTime.length>0? moment.utc(startTime[0].StartDateTime.replace(" ","T")).tz('Asia/Kolkata').format("HH:mm"):0
+
+function selectStartTrigger() {
+	
+	const modal = {
+		type: 'component',
+		component: 'selectStartComponent',
+		title: 'Select Date',
+		meta: {currentCollection:selectedLedger},
+		
+	};
+	// @ts-ignore
+	modalStore.trigger(modal);
+};
+async function updateStartTime(){
+	startTime = await fetchStartDate(selectedLedger.id)
+}
+
+triggerRefreshTime.subscribe((value)=>{
+	if (value===true){
+		updateStartTime();
+		restoreTime();
+	}
+});
 onMount(() => {
-  if (ledgers.length > 0) {
+  if (ledgers.length >0) {
+	if (startTime.length===0){
+		selectStartTrigger();
+	}
+
     fetchEmployees();
   }
 });
@@ -95,7 +124,7 @@ function modalComponentForm() {
 			component: 'CreateUser',
 			meta: {currentCollection:selectedLedger},
 			title: 'Create Employee',
-			response: (/** @type {any} */ r) => console.log('response:', r),
+			response: (/** @type {any} */ r) => fetchStartDate(),
 		};
 		// @ts-ignore
 		modalStore.trigger(modal);
@@ -127,16 +156,15 @@ function placeholderArray(placeholderCount) {
 
   const adminDisplay = !data.user.isAdmin? 'hidden' : '';
 </script>
-<div class="mb-4 mt-7 mx-2 bg-surface-200 sm:overflow-hidden  rounded-lg h-[87%] flex flex-col ">
+<div class="mb-4 mt-7 mx-2 bg-surface-200  rounded-lg  flex flex-col ">
 	<div class="card-header  justify-items-stretch">
 		<div class="flex flex-col space-y-6 mt-7">
 			<div class="grid grid-cols-6 justify-items-stretch mt-3">
 				<h2 class="h3 mb-4 col-span-4">Hello {data.user.isAdmin? data.user.name :data.user.username} 👋🏻</h2>
-				<button  class={'btn btn-md md:btn-xl variant-filled-primary col-start-6 justify-self-end '+(adminDisplay)} on:click={modalComponentForm}>
-						<span class={'space-x-4 text-xs font-light md:font-md '
-								}>
+				<button  class={'btn px-2 h-8 md:h-12 variant-filled-primary col-start-6 justify-self-end text-nowrap text-xs '+(adminDisplay)} on:click={modalComponentForm}>
+					
 						New User 
-						<i class="fa-regular fa-user"></i></span>
+						<i class="fa-regular fa-user"></i>
 					</button>
 			</div>
 
@@ -167,6 +195,14 @@ function placeholderArray(placeholderCount) {
 				
 						
 				</label>
+				<button class="btn px-3 py-2 w-30 rounded-2xl overflow-hidden text-ellipsis variant-ghost-secondary text-xs" on:click={selectStartTrigger}>
+					{#if startTime.length>0}
+						Start Time: {startTimeDisplay}
+						
+					{:else}
+						Enter Time
+					{/if}
+				</button>
 				
 
 				<!-- Input for new ledger -->
@@ -217,7 +253,7 @@ function placeholderArray(placeholderCount) {
 			<div class="px-1 md:mx-2 min-w-[60vw] mt-2 md:mt-8  min-h-[75%] mb-2 md:h-[80%]">
 				
 								
-							<Table inputEmployees={employees} isAdmin={data.user.isAdmin}/>
+							<Table inputEmployees={employees} isAdmin={data.user.isAdmin} startTime={startTimeDisplay!==0? startTimeDisplay : "None"}/>
 							
 						
 							

@@ -96,7 +96,7 @@ export async function POST({request,locals}) {
                 const checkAttendance = await locals.pb.collection('attendance').getFullList({
                     filter: `employee="${data.employee}" && date?>="${localUtcStartDay}"`
                 })
-                console.log('checked attendance',checkAttendance);
+                
                 if (checkAttendance.length===0){
                     const response = await locals.pb.collection('attendance').create(data)
                     return new Response(JSON.stringify({message:"Attendance Updated "+ formData.Name }),
@@ -108,6 +108,22 @@ export async function POST({request,locals}) {
                 console.log('Error updating the attendance record: ',error);
                 throw fail(404,{message:error.message});
             }
+        case 'leave':
+            try{
+                data = {
+                    ...data,
+                    
+                };
+                // collection('Logger').update(record['id'],updatedData)
+                let leaveResponse = await locals.pb.collection("attendance").update(data['id'],data)
+                console.log(leaveResponse)
+                return new Response(JSON.stringify({message:"Marked left "}),{status:200});
+                
+                }catch(error){
+                    console.log('Error when checking-in',error.message);
+                    throw fail(404,{message:error.message});
+            }
+            
         case 'checkout':
             try{
                 data = {
