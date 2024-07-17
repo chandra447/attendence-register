@@ -150,6 +150,7 @@ function placeholderArray(placeholderCount) {
   async function handleItemClick(index) {
     selectedLedgerindex = index;
 	selectedLedger = ledgers[selectedLedgerindex]
+	startTime = await fetchStartDate();
     await fetchEmployees();
   }
 
