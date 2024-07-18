@@ -93,7 +93,7 @@
       top: 0;
       left: 0;
       right: 0;
-      background: rgba(240, 240, 240, 0.8);
+      background: rgba(240, 240, 240, 0.7);
       display: flex;
       flex-direction: column;
       align-items: center;
