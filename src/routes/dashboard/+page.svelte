@@ -1,14 +1,13 @@
 <script>
-import { filter, getModalStore } from '@skeletonlabs/skeleton';
+import { getModalStore } from '@skeletonlabs/skeleton';
 import { get } from 'svelte/store';
 import { page, updated } from '$app/stores';
 import { popup,ListBox,ListBoxItem } from '@skeletonlabs/skeleton';
 import { onMount } from 'svelte';
-import { sleep,fetchStartDate } from '$lib/utils';
+import { fetchStartDate } from '$lib/utils';
 import { triggerRefresh,resetStore,triggerRefreshTime,restoreTime } from '../../stores/data';
 import Table from '../../components/table.svelte';
-import {RadioGroup, RadioItem} from '@skeletonlabs/skeleton';
-  import moment from 'moment-timezone';
+import moment from 'moment-timezone';
 
  
 
@@ -34,6 +33,9 @@ triggerRefresh.subscribe( value=>{
 	}
 	if (refreshLedger){
 		fetchLedgers();
+		if (startTime.length===0){
+		selectStartTrigger();
+	}
 		resetStore();
 	}
 })
@@ -152,6 +154,9 @@ function placeholderArray(placeholderCount) {
 	selectedLedger = ledgers[selectedLedgerindex]
 	startTime = await fetchStartDate();
     await fetchEmployees();
+	if (startTime.length===0){
+		selectStartTrigger();
+	}
   }
 
 
