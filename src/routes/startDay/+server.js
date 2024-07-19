@@ -40,7 +40,6 @@ export async function POST({request,locals})
 export const GET = async ({ url,locals }) => {
     const register = url.searchParams.get('register');
     const filterDate = url.searchParams.get('filterDate')
-    console.log(filterDate)
 	if (!locals.pb.authStore.isValid) {
 		return new Response('Not authenticated', { status: 401 });
 	}
