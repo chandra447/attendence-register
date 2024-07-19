@@ -152,7 +152,7 @@ function placeholderArray(placeholderCount) {
   async function handleItemClick(index) {
     selectedLedgerindex = index;
 	selectedLedger = ledgers[selectedLedgerindex]
-	startTime = await fetchStartDate();
+	startTime = await fetchStartDate(selectedLedger.id);
     await fetchEmployees();
 	if (startTime.length===0){
 		selectStartTrigger();
