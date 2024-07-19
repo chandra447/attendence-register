@@ -512,7 +512,8 @@ let hours = 1; // Default to 1 hour
                         <td>
                           <p class="text-xs opacity-80 tracking-normal">
                           Total Logs: {row.totalLogs? row.totalLogs : 0}<button on:click={handleDisplayLogs(row)} class="p-2 ml-2 transition duration-150 ease-out hover:ease-in hover:variant-filled-secondary hover:text-white hover:font-bold rounded-full border border-slate-700 inline-block ">&rarr;</button><br/>
-                          <span class="font-semibold text-violet-700">Total</span>: {totalDuration(row.logData,(row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None")}
+                          <span class="font-semibold text-violet-700">Total</span>: {totalDuration(row.logData,
+                                                      (row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None",row.presentAt).total}
                           {#if row.present===false && row.presentUpdatedAt!=="None"}
                           <span class={"font-semibold text-amber-700 text-sm "+ row.present? 'block':'hidden'}>👋🏻 &rarr; {moment.utc(row.presentUpdatedAt.replace(" ","T")).tz('Asia/Kolkata').format('HH:mm')}</span>
                           {/if}
