@@ -18,7 +18,6 @@ export let isAdmin;
 export let startTime;
 export let inputEmployees;
 export let fetchStartDateFn;
-export let startTimeList;
 
 
 
@@ -45,44 +44,70 @@ function handleDisplayLogs(row){
         presentAt: row.presentAt !== "None" 
                   ? moment.utc(row.presentAt.replace(" ", "T")).tz('Asia/Kolkata')
                   : 'None',
+        presentAtRaw: row.presentAt !== "None" 
+                  ? row.presentAt
+                  : 'None',
       },
   position: 'right',
+  
 
 };
 drawerStore.open(drawerSettings);
 }
-function totalDuration(logData,additional,presentAtTime,name){
-  console.log('this is the start time',startTime,'for---',name)
-  
-  if (logData===undefined){
-    return '0 mins'
 
-  }
-  let totalDurationVariable = logData.reduce(
+function convertTimeToUTCTimestamp(timeString) {
+  // Get current date
+  const nowm = moment().tz('Asia/Kolkata');
+  // Split the time string into hours and minutes
+  const [hours, minutes] = timeString.split(':').map(Number);
+  // Set the time on today's date
+  nowm.hours(hours).minutes(minutes).seconds(0).milliseconds(0);
+  // Convert to UTC
+  const utcMoment = nowm.clone().tz('UTC');
+  return utcMoment;
+}
+function totalDuration(logData,additional,presentAtTime){
+ let lateTime
+ let totalDurationVariable
+ let additionaDuration
+ let lateReturn = 0
+ let returnDuration=0
+
+ if(startTime!=='None' && presentAtTime!=="None"){
+      let lateTime = Math.abs(moment.tz(presentAtTime,'YYYY-MM-DD HH:mm:ss','UTC')
+                          .diff(convertTimeToUTCTimestamp(startTime),"minutes").valueOf())
+      // console.log('duration before',newDuration,'===',convertMinutesToHoursAndMinutes(newDuration))
+      // console.log('After late',newDuration,'===',convertMinutesToHoursAndMinutes(newDuration))
+      
+      returnDuration+=lateTime
+      lateReturn = lateTime
+      // return convertMinutesToHoursAndMinutes(lateTime)
+     
+    }
+
+    //calculate the additional duration which is if the user has active session
+    if (additional!=="None" ){
+       
+    
+        additionaDuration = 
+                         Math.abs(
+                           moment.tz(additional, 'YYYY/MM/DD HH:mm:ss', 'Asia/Kolkata')
+                           .diff(moment().tz('Asia/Kolkata'),"minutes").valueOf())
+       returnDuration+=additionaDuration
+      //  return convertMinutesToHoursAndMinutes(newDuration)
+     }
+     //sumup all the log data if exists
+       
+  if (logData!==undefined){
+    totalDurationVariable = logData.reduce(
       (sum,item)=> {
               return (sum + (item.duration || 0));
                  }, 0)
-  if (additional!=="None" ){
-       
-    
-    let newDuration = totalDurationVariable+
-                      Math.abs(
-                        moment.tz(additional, 'YYYY/MM/DD HH:mm:ss', 'Asia/Kolkata')
-                        .diff(moment().tz('Asia/Kolkata'),"minutes").valueOf())
-    if(startTime!=='None' && presentAtTime!=="None"){
-      console.log('calcualting the latetime',presentAtTime,startTime)
-      let lateTime = Math.abs(moment.tz(presentAtTime,'YYYY/MM/DD HH:mm:ss', 'Asia/Kolkata')
-                          .diff(moment.tz(startTime,'HH:mm', 'UTC'),"minutes").valueOf())
-      console.log('duration before',newDuration,'===',convertMinutesToHoursAndMinutes(newDuration))
-      newDuration = newDuration+lateTime
-      console.log('After late',newDuration,'===',convertMinutesToHoursAndMinutes(newDuration))
+    returnDuration+=totalDurationVariable
+
+  }  
   
-      return convertMinutesToHoursAndMinutes(newDuration)
-     
-    }
-    return convertMinutesToHoursAndMinutes(newDuration)
-  }
-  return convertMinutesToHoursAndMinutes(totalDurationVariable)
+  return {total:convertMinutesToHoursAndMinutes(returnDuration),lateValue:convertMinutesToHoursAndMinutes(lateReturn)}
 }
 
 const triggertoast=(/** @type {string} */ tmessage, background)=>{
@@ -344,12 +369,23 @@ let hours = 1; // Default to 1 hour
                     <td class="border border-gray-300 p-1 text-center">{convertMinutesToHoursAndMinutes(Math.abs(moment($drawerStore.meta.lastcheckout).diff(moment().utc().tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm'),"minutes").valueOf()))}</td>
                   </tr>
                   {/if}
+                  <tr>
+                    <td class="border border-gray-300 p-2 text-left" colspan="2">Late Time</td>
+                   
+                    <td class="border border-gray-300 p-2 text-center font-semibold">
+                      {totalDuration($drawerStore.meta.logs,
+                      ($drawerStore.meta.presentUpdatedAt==="None" && $drawerStore.meta.disabledCheckin==false)? $drawerStore.meta.lastcheckout:"None",$drawerStore.meta.presentAtRaw).lateValue}</td>
+                  </tr>
                   
                   <tr>
                     <td class="border border-gray-300 p-2 text-left" colspan="2">Total</td>
-                    <!-- <td class="border border-gray-300 p-2 text-center font-semibold">{totalDuration($drawerStore.meta.logs,($drawerStore.meta.presentUpdatedAt==="None" && $drawerStore.meta.disabledCheckin==false)? $drawerStore.meta.lastcheckout:"None")}</td> -->
+                   
+                    <td class="border border-gray-300 p-2 text-center font-semibold">
+                      {totalDuration($drawerStore.meta.logs,
+                      ($drawerStore.meta.presentUpdatedAt==="None" && $drawerStore.meta.disabledCheckin==false)? $drawerStore.meta.lastcheckout:"None",$drawerStore.meta.presentAtRaw).total}</td>
                   </tr>
                 </tbody>
+               
               </table>
             {:else}<h1>No logs for the employee</h1>
           {/if}
@@ -588,7 +624,7 @@ let hours = 1; // Default to 1 hour
                       <p class="text-xs opacity-80 tracking-wide mr-auto mt-2">
                         Total Logs: {row.totalLogs? row.totalLogs : 0}<br/>
                         <span class=" text-violet-700 text-xs">Total</span>:{totalDuration(row.logData,
-                                                      (row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None",row.presentAt,row.Name)}
+                                                      (row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None",row.presentAt).total}
                         </p>
                       <div class="order-last grid grid-cols-2 items-center space-x-1">
                         <button class="col-start-1 btn rounded-xl px-4 py-2  variant-filled-success min-w-18 text-xs overflow-hidden whitespace-nowrap  text-ellipsis"

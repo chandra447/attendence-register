@@ -269,7 +269,7 @@ function placeholderArray(placeholderCount) {
 								isAdmin={data.user.isAdmin}
 									 startTime={startTimeDisplay!==0? startTimeDisplay : "None"}
 									 fetchStartDateFn={fetchStartDateWrapper}
-									 startTimeList = {startTime}/>
+									 />
 							
 						
 							
