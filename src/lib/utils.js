@@ -71,7 +71,9 @@ export function sleep(ms) {
 			presentAt: createdDate,
             transaction: transaction,
             disabledCheckout: !isPresent || !hasAttendanceRecord,
-            disabledCheckin: isPresent || !hasAttendanceRecord
+            disabledCheckin: isPresent || !hasAttendanceRecord,
+			showmodal:false,
+			
         };
     });
 }
@@ -176,8 +178,13 @@ export function sleep(ms) {
 	return `${shours}:${sminutes}:${sseconds}`
 
 }
-export async function fetchStartDate(ledgerid){
-	const response = await fetch(`/startDay?register=${ledgerid}`,{method:'GET'})
+export async function fetchStartDate(ledgerid,selectedDatePass=null){
+	
+	if (!selectedDatePass) {
+		selectedDatePass = moment.utc().tz('Asia/Kolkata').format('YYYY-MM-DD');
+	  }
+
+	const response = await fetch(`/startDay?register=${ledgerid}&filterDate=${selectedDatePass}`,{method:'GET'})
 	if (response.ok){
 		let startLogs = await response.json();
 		

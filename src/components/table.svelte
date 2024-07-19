@@ -1,7 +1,7 @@
 
 <script>
   import {RadioGroup, RadioItem} from '@skeletonlabs/skeleton';
-  import { tableFilters } from "../stores/data";
+  import { restoreTime, tableFilters } from "../stores/data";
   import { sleep,convertMinutesToHoursAndMinutes, calculateString } from "$lib/utils";
   import Spinner from "./spinner.svelte";
   import { getEmployeesInterval,updateAttendance,currentpersistedDate,deleteEmployees } from '$lib/curd';
@@ -10,12 +10,18 @@
   import { dateFilter } from '../stores/data';
   import { getToastStore } from '@skeletonlabs/skeleton';
   import { Drawer, getDrawerStore } from '@skeletonlabs/skeleton';
+  import Modal from './Modal.svelte';
 
 
-  // import type { DrawerSettings, DrawerStore } from '@skeletonlabs/skeleton';
+
 export let isAdmin;
 export let startTime;
 export let inputEmployees;
+export let fetchStartDateFn;
+export let startTimeList;
+
+
+
 $: selectedStartTime = startTime==="None"? true: false;
 const adminDisplay = !isAdmin? 'hidden' : '';
 const drawerStore = getDrawerStore();
@@ -45,8 +51,9 @@ function handleDisplayLogs(row){
 };
 drawerStore.open(drawerSettings);
 }
-function totalDuration(logData,additional){
-
+function totalDuration(logData,additional,presentAtTime,name){
+  console.log('this is the start time',startTime,'for---',name)
+  
   if (logData===undefined){
     return '0 mins'
 
@@ -55,13 +62,24 @@ function totalDuration(logData,additional){
       (sum,item)=> {
               return (sum + (item.duration || 0));
                  }, 0)
-  if (additional!=="None"){
+  if (additional!=="None" ){
        
     
     let newDuration = totalDurationVariable+
                       Math.abs(
                         moment.tz(additional, 'YYYY/MM/DD HH:mm:ss', 'Asia/Kolkata')
                         .diff(moment().tz('Asia/Kolkata'),"minutes").valueOf())
+    if(startTime!=='None' && presentAtTime!=="None"){
+      console.log('calcualting the latetime',presentAtTime,startTime)
+      let lateTime = Math.abs(moment.tz(presentAtTime,'YYYY/MM/DD HH:mm:ss', 'Asia/Kolkata')
+                          .diff(moment.tz(startTime,'HH:mm', 'UTC'),"minutes").valueOf())
+      console.log('duration before',newDuration,'===',convertMinutesToHoursAndMinutes(newDuration))
+      newDuration = newDuration+lateTime
+      console.log('After late',newDuration,'===',convertMinutesToHoursAndMinutes(newDuration))
+  
+      return convertMinutesToHoursAndMinutes(newDuration)
+     
+    }
     return convertMinutesToHoursAndMinutes(newDuration)
   }
   return convertMinutesToHoursAndMinutes(totalDurationVariable)
@@ -93,13 +111,20 @@ async function handleTriggerToast(response,Name,todo){
 };
 $: inputDate = moment.utc().tz('Asia/Kolkata').format('YYYY-MM-DD');
 let dataRefresh = false;
+function handleDateChange() {
+
+    fetchStartDateFn(inputDate);
+  }
 async function handleUpdateDate(){
   dataRefresh = true;
   //trigger the data refresh without the interval
   let updatedEmployees = await getEmployeesInterval({ interval: 10000, register: inputEmployees[0].register,retrieveDate:inputDate });
   inputEmployees = updatedEmployees;
+  handleDateChange()
+  // selectedStartTime = startTime==="None"? true: false;
   dateFilter.set(inputDate);
   dataRefresh = false;
+  
 }
 
 dateFilter.subscribe(value=>{
@@ -249,8 +274,40 @@ async function purgeEmployees(){
     headSelected = false;
     selectedEmployees = [];
 }
+let supervisorUpdation = false;
+let hours = 1; // Default to 1 hour
+  let minutes = 0;
 
+  $: totalMinutes = hours * 60 + minutes;
 
+  // Generate arrays for select options
+  const hourOptions = Array.from({ length: 24 }, (_, i) => i);
+  const minuteOptions = Array.from({ length: 60 }, (_, i) => i);
+  function testModal(row,formData){
+    console.log(formData)
+    let hr = formData.Hours==='0'? "1":formData.Hours
+    let minute = formData.Minutes==='0'?"0":formData.Minutes
+    if (Number(formData.Minutes)<10){
+      minute = "0"+minute
+    }
+    let data= {
+      id: row.id,
+      name:formData.Name? formData.Name : row.Name,
+      timeLimit:hr+":"+ minute
+    }
+    let supervisor = {
+      username:row.Name,
+      password: formData.Pin!==''||formData.Pin? formData.pin: '12345'
+    }
+    console.log('processed data',data)
+    console.log('processed supervisor',supervisor)
+  }
+  function resetForm(row){
+    row.hours=0,
+    row.minutes=0,
+    row.isSupervisor=row.isSupervisor,
+    row.pin = ''
+  }
 </script>
 
 <Drawer>
@@ -290,7 +347,7 @@ async function purgeEmployees(){
                   
                   <tr>
                     <td class="border border-gray-300 p-2 text-left" colspan="2">Total</td>
-                    <td class="border border-gray-300 p-2 text-center font-semibold">{totalDuration($drawerStore.meta.logs,($drawerStore.meta.presentUpdatedAt==="None" && $drawerStore.meta.disabledCheckin==false)? $drawerStore.meta.lastcheckout:"None")}</td>
+                    <!-- <td class="border border-gray-300 p-2 text-center font-semibold">{totalDuration($drawerStore.meta.logs,($drawerStore.meta.presentUpdatedAt==="None" && $drawerStore.meta.disabledCheckin==false)? $drawerStore.meta.lastcheckout:"None")}</td> -->
                   </tr>
                 </tbody>
               </table>
@@ -303,6 +360,7 @@ async function purgeEmployees(){
 	
 	{/if}
 </Drawer>
+
 
 <div class="flex flex-col space-y-6 md:space-y-10 h-[98%] md:h-[95%] px-1 md:px-4">
     <div class={selectedEmployees.length===0? 'hidden': 'md:block hidden' } >
@@ -327,7 +385,10 @@ async function purgeEmployees(){
         <input type="search" placeholder="Search..." 
         class="placeholder:text-xs placeholder:opacity-60
         rounded-lg focus:rounded-lg input" bind:value={searchTerm}/>
-        <input type="date" class="rounded-md input text-sm" bind:value={inputDate} on:change={handleUpdateDate}/>
+        <input type="date" 
+        class="rounded-md input text-sm"
+         bind:value={inputDate}
+          on:change={handleUpdateDate}/>
       </div>
           
     </div>
@@ -439,13 +500,54 @@ async function purgeEmployees(){
               </span>
         </div>
         <div class="flex flex-row space-x-4">
-          <button class={'btn variant-filled-error btn-md w-[20%] py-1 rounded-md mx-2 '+ adminDisplay} on:click={onHeadSelected}>Select All</button>
-          <button class={'btn variant-filled-error btn-md w-[20%] py-1 rounded-md mx-2 text-wrap text-xs '+ (selectedEmployees.length===0? 'hidden': 'block md:hidden' )} on:click={purgeEmployees}>Delete {selectedEmployees.length} Employees</button>
+          <button class={'btn variant-filled-error btn-md w-[20%] py-1 rounded-md mx-2 text-xs text-ellipsis overflow-hidden '+ adminDisplay} on:click={onHeadSelected}>Select All</button>
+          <button class={'btn variant-filled-error btn-md w-[20%] py-1 rounded-md mx-2  overflow-hidden text-xs '+ (selectedEmployees.length===0? 'hidden': 'block md:hidden' )} on:click={purgeEmployees}>Delete {selectedEmployees.length}</button>
         </div>
         {#each matchedEmployees as row,index}
               <div class="md:hidden  w-[95%] mx-auto relative bg-gray-400 p-4 rounded-md grid grid-rows-2">
             
-                    <input type="checkbox" class={'absolute top-1 left-2 accent-pink-500/20 '+ adminDisplay} checked={selectedEmployees.find((emp) => emp === row.id)? true||headSelected: false||headSelected} on:click={onChildSelect(row.id)}/>
+                    <input type="checkbox" class={'absolute top-1 left-2 accent-pink-500/20   '+ adminDisplay} checked={selectedEmployees.find((emp) => emp === row.id)? true||headSelected: false||headSelected} on:click={onChildSelect(row.id)}/>
+                    <!-- <button class={"absolute right-3 top-2 text-xs "+ adminDisplay} on:click={() => (row.showmodal = true)}><i class="fa-solid fa-pencil"></i></button> -->
+                    <Modal bind:showModal={row.showmodal} 
+                          onUpdate={(formData) => testModal(row, formData)} onClose={() => resetForm(row)}>
+                      <h2 slot="header">
+                        {row.Name}
+                      </h2>
+                      <div class="form-control space-y-2 flex-row m-3">
+                        <label for="name-{row.id}" class="label bp-1">Name</label>
+                        <input id="name-{row.id}" class="input min-w-full" type="text" name="Name" value={row.Name} />
+                        
+                        <div class="flex-col grid grid-cols-2 ">
+                          <div class="col-span-1 col-start-1 justify-self-center">
+                            <label for="hours-{row.id}" class="label inline-block">Hours</label>
+                            <select id="hours-{row.id}" name="Hours" bind:value={row.hours}>
+                              {#each hourOptions as hour}
+                                <option value={hour}>{hour}</option>
+                              {/each}
+                            </select>
+                          </div>
+                          <div class="col-span-1 col-start-2 justify-self-center">
+                            <label for="minutes-{row.id}" class="inline-block label">Minutes:</label>
+                            <select id="minutes-{row.id}" name="Minutes" bind:value={row.minutes}>
+                              {#each minuteOptions as minute}
+                                <option value={minute}>{minute}</option>
+                              {/each}
+                            </select>
+                          </div>
+                        </div>
+                    
+                        <label for="supervisor-{row.id}" class="space-x-2"> 
+                          <span class="inline">Supervisor</span>
+                          <input id="supervisor-{row.id}" class="input checkbox" type="checkbox" name="Supervisor" 
+                                 bind:checked={row.isSupervisor} />
+                        </label>
+                        <div class:hidden={!row.isSupervisor}>
+                          <label for="pin-{row.id}">Enter Pin</label>
+                          <input id="pin-{row.id}" class="input inline-block" type="password" name="Pin" bind:value={row.pin}/>
+                        </div>
+                      </div>
+                    </Modal>
+                  
                     <div class="grid grid-cols-4  mb-1 mt-1 space-y-2">
                       <div class="col-start-1 col-span-1 overflow-hidden text-xs sm:text-sm break-words hyphens-auto max-w-[150px] my-auto  ">{row.Name}</div>
                       <div class={'mr-auto mt-1 ml-3 text-red-700 p-1 text-xs col-start-2 col-span-1 '+(row.disabledCheckin? 'hidden' : 'block')}>
@@ -482,10 +584,11 @@ async function purgeEmployees(){
                       <button class="justify-end ml-auto align-top rounded-full variant-filled-secondary col-start-4  mr-1 text-ellipsis overflow-hidden h-7 px-2" on:click={handleDisplayLogs(row)}>&rarr;</button>
                     </div>
                     
-                    <div class="flex flex-row row-span-1 justify-end my-auto">
+                    <div class="flex flex-row row-span-1 justify-end my-auto block">
                       <p class="text-xs opacity-80 tracking-wide mr-auto mt-2">
                         Total Logs: {row.totalLogs? row.totalLogs : 0}<br/>
-                        <span class=" text-violet-700 text-xs">Total</span>:{totalDuration(row.logData,(row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None")}
+                        <span class=" text-violet-700 text-xs">Total</span>:{totalDuration(row.logData,
+                                                      (row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None",row.presentAt,row.Name)}
                         </p>
                       <div class="order-last grid grid-cols-2 items-center space-x-1">
                         <button class="col-start-1 btn rounded-xl px-4 py-2  variant-filled-success min-w-18 text-xs overflow-hidden whitespace-nowrap  text-ellipsis"
@@ -496,9 +599,11 @@ async function purgeEmployees(){
                         on:click={handleUpdates(row.id,'checkout')} 
                           disabled={row.disabledCheckout || currentpersistedDate!==inputDate || dataRefresh || selectedStartTime}>checkout</button>
                       </div>
+                      
+                      
                 
               </div>
-            
+
             </div>
       {/each}
       
@@ -507,7 +612,24 @@ async function purgeEmployees(){
 
     </div>
 </div>
+<style>
+  .editButton {
+		float: right;
+		height: 1em;
+		box-sizing: border-box;
+		padding: 0 0.5em;
+		line-height: 1;
+		background-color: transparent;
+		border: none;
+		color: rgb(170, 30, 30);
+		opacity: 0;
+		transition: opacity 0.2s;
+	}
 
+	.editButton:hover {
+		opacity: 1;
+	}
+</style>
 
 
 

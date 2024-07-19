@@ -39,19 +39,36 @@ export async function POST({request,locals})
 //to get the list of attendance
 export const GET = async ({ url,locals }) => {
     const register = url.searchParams.get('register');
+    const filterDate = url.searchParams.get('filterDate')
+    console.log(filterDate)
 	if (!locals.pb.authStore.isValid) {
 		return new Response('Not authenticated', { status: 401 });
 	}
 
 	const userId = locals.user.id;
     //local start of the day to utc
-    let localUtcStartDay = moment.tz('Asia/Kolkata').startOf('day').utc().toISOString().replace("T"," ");
+    if (!register) {
+        return new Response('Register ID is required', { status: 400 });
+    }
+    let startDate, endDate;
+    if (filterDate) {
+        let istDate = moment.tz(filterDate, "YYYY-MM-DD", "Asia/Kolkata");
+        startDate = istDate.startOf('day').clone().utc().toISOString().replace("T"," ");
+        endDate = istDate.endOf('day').clone().utc().toISOString().replace("T"," ");
+    } else {
+        let istDate = moment.utc().tz('Asia/Kolkata');
+        startDate = istDate.startOf('day').clone().utc().toISOString().replace("T"," ");
+        endDate = istDate.endOf('day').clone().utc().toISOString().replace("T"," ");
+    }
+   
+    // let localUtcStartDay = moment.tz('Asia/Kolkata').startOf('day').utc().toISOString().replace("T"," ");
     
 
 	try {
 		const ledgers = serializeNonPOJOs(
 			await locals.pb.collection('StartLedger').getFullList({
-				filter: `StartDateTime > "${localUtcStartDay}" && register.id="${register}"`,
+				filter: `StartDateTime > "${startDate}" && register.id="${register}" 
+                        && StartDateTime<"${endDate}"`,
                 sort: "-created",
 			})
 		);

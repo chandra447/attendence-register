@@ -95,7 +95,7 @@ function selectStartTrigger() {
 	// @ts-ignore
 	modalStore.trigger(modal);
 };
-async function updateStartTime(){
+async function updateStartTime(dateSelected){
 	startTime = await fetchStartDate(selectedLedger.id)
 }
 
@@ -153,6 +153,7 @@ function placeholderArray(placeholderCount) {
     selectedLedgerindex = index;
 	selectedLedger = ledgers[selectedLedgerindex]
 	startTime = await fetchStartDate(selectedLedger.id);
+
     await fetchEmployees();
 	if (startTime.length===0){
 		selectStartTrigger();
@@ -161,6 +162,11 @@ function placeholderArray(placeholderCount) {
 
 
   const adminDisplay = !data.user.isAdmin? 'hidden' : '';
+
+  async function fetchStartDateWrapper(selectedDatePass) {
+
+  startTime= await fetchStartDate(selectedLedger.id, selectedDatePass);
+}
 </script>
 <div class="mb-4 mt-7 mx-2 bg-surface-200  rounded-lg  flex flex-col ">
 	<div class="card-header  justify-items-stretch">
@@ -259,7 +265,11 @@ function placeholderArray(placeholderCount) {
 			<div class="px-1 md:mx-2 min-w-[60vw] mt-2 md:mt-8  min-h-[75%] mb-2 md:h-[80%]">
 				
 								
-							<Table inputEmployees={employees} isAdmin={data.user.isAdmin} startTime={startTimeDisplay!==0? startTimeDisplay : "None"}/>
+							<Table inputEmployees={employees} 
+								isAdmin={data.user.isAdmin}
+									 startTime={startTimeDisplay!==0? startTimeDisplay : "None"}
+									 fetchStartDateFn={fetchStartDateWrapper}
+									 startTimeList = {startTime}/>
 							
 						
 							
