@@ -668,22 +668,25 @@ function testModal(row,formData){
                         <span>{row.Name}</span>
                         
                       </div>
-                      <button class="btn px-2 py-1 h-6 text-xs variant-filled-success m-1 col-start-2 col-span-1 justify-self-center rounded-md"
-                               class:hidden={(currentpersistedDate!==inputDate)} disabled={selectedStartTime || row.transaction===0}
-                                          on:click={() => (row.resetModal = true)}>Reset</button>
-              
-                      <ResetModal bind:showModal={row.resetModal} row={row} currentView="mobile"
-                        resetModalFn={() => resetPresent(row )}
-                          checkoutFn={() => resetToCheckout(row)}>
-                        <h2 slot="header">
-                          {row.Name}
-                        </h2>
+                      
+                      <div class="col-start-2 col-span-1 grid grid-cols-2 gap-2 justify-self-center">
+                        <button class="btn px-2 py-1 h-6 text-xs variant-filled-success m-1 col-start-1 col-span-1 justify-self-center rounded-md"
+                        class:hidden={(currentpersistedDate!==inputDate)} disabled={selectedStartTime || row.transaction===0}
+                                   on:click={() => (row.resetModal = true)}>Reset</button>
+       
+                        <ResetModal bind:showModal={row.resetModal} row={row} currentView="mobile"
+                          resetModalFn={() => resetPresent(row )}
+                            checkoutFn={() => resetToCheckout(row)}>
+                          <h2 slot="header">
+                            {row.Name}
+                          </h2>
 
-                      </ResetModal>
+                        </ResetModal>
 
-                      <div class={'mr-auto mt-1 ml-3 text-red-700 p-1 text-xs col-start-2 col-span-1 '+(row.disabledCheckin? 'hidden' : 'block')}>
-                        <Timer startTime={row.latestCheckoutTime? row.latestCheckoutTime: moment()} setid={row.id}/>
-                      </div> 
+                        <div class={'mr-auto mt-1  text-red-700 p-1 text-xs col-start-2 col-span-1 justify-self-start '+(row.disabledCheckin? 'hidden' : 'block')}>
+                          <Timer startTime={row.latestCheckoutTime? row.latestCheckoutTime: moment()} setid={row.id}/>
+                        </div> 
+                      </div>
                         <div class="flex flex-row space-x-1 col-start-3 col-span-1">
                         <button class="btn px-4 ml-6 rounded-xl   variant-filled-secondary text-xs text-ellipsis overflow-hidden h-7 "
                           disabled={row.transaction >= 1 || currentpersistedDate!==inputDate || dataRefresh || selectedStartTime} on:click={handleUpdates(row.id,'present')}>
