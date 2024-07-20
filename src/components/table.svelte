@@ -560,18 +560,22 @@ function testModal(row,formData){
                         </label>
                         </td>
                         <td class="table-cell-fit justify-self-center">
-                          <button class="btn px-2 py-1 h-6 text-xs variant-filled-success m-1 col-start-2 col-span-1 justify-self-center rounded-md"
-                               class:hidden={(currentpersistedDate!==inputDate)} disabled={selectedStartTime || row.transaction===0}
-                                          on:click={() => (row.resetModal = true)}>Reset</button>
-              
-                      <ResetModal bind:showModal={row.resetModal} row={row} currentView="mobile"
-                        resetModalFn={() => resetPresent(row )}
-                          checkoutFn={() => resetToCheckout(row)}>
-                        <h2 slot="header">
-                          {row.Name}
-                        </h2>
-
-                      </ResetModal>
+                            <button type="button" 
+                            class="btn px-2 py-1 h-6 text-xs variant-filled-success m-1 col-start-2 col-span-1 justify-self-center rounded-md"
+                            class:hidden={(currentpersistedDate!==inputDate)} 
+                            disabled={selectedStartTime || row.transaction===0}
+                            on:click|stopPropagation={() => (row.resetModal = true)}>Reset</button>
+                      
+                            <ResetModal 
+                                bind:showModal={row.resetModal} 
+                                {row} 
+                                currentView="md"
+                                resetModalFn={() => resetPresent(row)}
+                                checkoutFn={() => resetToCheckout(row)}>
+                                <h2 slot="header">
+                                    {row.Name}
+                                </h2>
+                            </ResetModal>
                         </td>
                         <td class="table-cell-fit">
                         <div class="flex flex-row space-x-2">
@@ -668,7 +672,7 @@ function testModal(row,formData){
                                class:hidden={(currentpersistedDate!==inputDate)} disabled={selectedStartTime || row.transaction===0}
                                           on:click={() => (row.resetModal = true)}>Reset</button>
               
-                      <ResetModal bind:showModal={row.resetModal} row={row} 
+                      <ResetModal bind:showModal={row.resetModal} row={row} currentView="mobile"
                         resetModalFn={() => resetPresent(row )}
                           checkoutFn={() => resetToCheckout(row)}>
                         <h2 slot="header">

@@ -49,6 +49,7 @@
     "dayjs-timezone-iana-plugin": "^0.1.0",
     "moment-timezone": "^0.5.45",
     "pocketbase": "^0.21.3",
+    "svelte-portal": "^2.2.1",
     "vanilla-calendar-pro": "^2.9.6",
     "zod": "^3.23.8"
   }
