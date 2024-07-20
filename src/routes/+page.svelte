@@ -4,6 +4,15 @@
   import Register from "../components/register.svelte";
   import UserLogin from "../components/UserLogin.svelte";
   import { registerActive } from "../stores/data";
+  import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
+
+  let isStandalone = false;
+  onMount(() => {
+    if (browser) {
+      isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    }
+  });
 
 
   export let form;

@@ -42,7 +42,7 @@ export async function POST({request,locals})
 
 };
 
-//to get the lost of all ledgers
+//to get the list of all ledgers
 export const GET = async ({ locals }) => {
 	if (!locals.pb.authStore.isValid) {
 		return new Response('Not authenticated', { status: 401 });

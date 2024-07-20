@@ -1,4 +1,7 @@
-export const load = ({ locals }) => {
+import { redirect } from '@sveltejs/kit';
+import PocketBase from 'pocketbase';
+
+export const load = ({ locals,cookies,url }) => {
 	if (locals.user) {
 		
 		return {

@@ -15,6 +15,11 @@ export function resetStore() {
     triggerRefresh.set(initialData);
   }
 
+export const triggerRefreshTime = writable(false)
+export function restoreTime(){
+  triggerRefreshTime.set(false)
+}
+
 
 export const tableFilters = ['All','Absent','Present','OutShop'];
 

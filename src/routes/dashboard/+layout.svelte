@@ -2,6 +2,7 @@
 	import {AppBar, Avatar, Modal, initializeStores,Toast} from '@skeletonlabs/skeleton';
 	import CreateUser from '../../lib/modals/UserOnboard.svelte'
   import LedgerCreator from '$lib/modals/LedgerCreator.svelte';
+  import SelectStart from '$lib/modals/selectStart.svelte';
 
 
 	initializeStores();
@@ -9,11 +10,12 @@
 	const modalRegistry = {
 		CreateUser: {ref:CreateUser},
 		createLedgerComponent: {ref:LedgerCreator},
+		selectStartComponent: {ref:SelectStart},
 	};
 	 
 	
 </script>
-<div class=" h-screen ">
+<div class=" h-screen items-center justify-center ">
 <AppBar>
 	<svelte:fragment slot="lead">
 		<div class="flex flex-row items-center space-x-1">
