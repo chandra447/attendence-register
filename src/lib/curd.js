@@ -17,7 +17,21 @@ export async function updateAttendance(data) {
       throw error;
     }
   }
-
+export async function resetAttendance(data){
+  try{
+    const response = await fetch('/employees',{
+      method:'PATCH',
+      headers:{
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    return response
+  }catch(error){
+    console.error('Error when patching the record: ',error);
+    throw error;
+  }
+}
   export async function getEmployeesInterval(data) {
     
     try {

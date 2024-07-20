@@ -2,6 +2,7 @@
 	export let showModal; // boolean
     export let onUpdate; // function to call when updating
     export let onClose;
+	
 
 	let dialog; // HTMLDialogElement
 
@@ -26,7 +27,7 @@
 bind:this={dialog} 
 on:close={handleClose}
 on:click|self={handleClose}
-class="w-[90%]"
+class="w-[90%] m-auto"
 >
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div on:click|stopPropagation >

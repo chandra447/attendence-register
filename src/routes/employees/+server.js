@@ -108,6 +108,19 @@ export async function POST({request,locals}) {
                 console.log('Error updating the attendance record: ',error);
                 throw fail(404,{message:error.message});
             }
+        case 'createFullRecord':
+            data = {
+                ...data,
+                inTime:currentDate,
+            };
+            try{
+                const response = await locals.pb.collection('Logger').create(data)
+                return new Response(JSON.stringify({message:"Created path log"}),{status:200});
+                
+            }catch(error){
+                console.log('Error updating the attendance record: ',error);
+                throw fail(404,{message:error.message});
+            }
         case 'leave':
             try{
                 data = {
@@ -167,6 +180,7 @@ export async function POST({request,locals}) {
                     console.log('Error when checking-in',error.message);
                     throw fail(404,{message:error.message});
             }
+        
 
         default:
             console.log('Todo not provided')
@@ -187,3 +201,43 @@ export async function DELETE({locals,request}){
 
     return new Response(JSON.stringify({message:'Deleted records'}),{status:200});
 }
+
+
+
+// ... (keep all existing imports and functions)
+
+export async function PATCH({ request, locals }) {
+    try {
+        const { id, ...updateData } = await request.json();
+        
+        if (!id) {
+            return json({ message: 'Attendance ID is required' }, { status: 400 });
+        }
+        let updatedRecord;
+        if (updateData.present===false){
+            const updatedRecord = await locals.pb.collection('attendance').delete(id)
+        }else{
+
+        // Update the record directly without fetching first
+        const updatedRecord = await locals.pb.collection('attendance').update(id, updateData);
+        }
+
+        return json({
+            message: "Attendance record updated successfully",
+            data: updatedRecord
+        }, { status: 200 });
+
+    } catch (error) {
+        console.error('Error updating the attendance record:', error);
+        
+        // Check if the error is due to record not found
+        if (error.status === 404) {
+            return json({ message: 'Attendance record not found' }, { status: 404 });
+        }
+        
+        return json({ 
+            message: error.message || 'An error occurred while updating the attendance record'
+        }, { status: 500 });
+    }
+}
+

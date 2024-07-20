@@ -4,13 +4,14 @@
   import { restoreTime, tableFilters } from "../stores/data";
   import { sleep,convertMinutesToHoursAndMinutes, calculateString } from "$lib/utils";
   import Spinner from "./spinner.svelte";
-  import { getEmployeesInterval,updateAttendance,currentpersistedDate,deleteEmployees } from '$lib/curd';
+  import { getEmployeesInterval,updateAttendance,currentpersistedDate,deleteEmployees, resetAttendance } from '$lib/curd';
   import Timer from './timer.svelte';
   import moment from 'moment-timezone';
   import { dateFilter } from '../stores/data';
   import { getToastStore } from '@skeletonlabs/skeleton';
   import { Drawer, getDrawerStore } from '@skeletonlabs/skeleton';
   import Modal from './Modal.svelte';
+  import ResetModal from './resetModal.svelte';
 
 
 
@@ -74,8 +75,9 @@ function totalDuration(logData,additional,presentAtTime){
  let returnDuration=0
 
  if(startTime!=='None' && presentAtTime!=="None"){
+      
       let lateTime = Math.abs(moment.tz(presentAtTime,'YYYY-MM-DD HH:mm:ss','UTC')
-                          .diff(convertTimeToUTCTimestamp(startTime),"minutes").valueOf())
+                          .diff(moment.tz(inputDate+" "+startTime,"YYYY-MM-DD HH:mm","Asia/Kolkata"),"minutes").valueOf())
       // console.log('duration before',newDuration,'===',convertMinutesToHoursAndMinutes(newDuration))
       // console.log('After late',newDuration,'===',convertMinutesToHoursAndMinutes(newDuration))
       
@@ -308,8 +310,7 @@ let hours = 1; // Default to 1 hour
   // Generate arrays for select options
   const hourOptions = Array.from({ length: 24 }, (_, i) => i);
   const minuteOptions = Array.from({ length: 60 }, (_, i) => i);
-  function testModal(row,formData){
-    console.log(formData)
+function testModal(row,formData){
     let hr = formData.Hours==='0'? "1":formData.Hours
     let minute = formData.Minutes==='0'?"0":formData.Minutes
     if (Number(formData.Minutes)<10){
@@ -327,12 +328,69 @@ let hours = 1; // Default to 1 hour
     console.log('processed data',data)
     console.log('processed supervisor',supervisor)
   }
+  async function resetPresent(row,fullRefresh=true){
+    console.log('within the resetPresent Table component performing reset')
+    console.log('this is the row passed',row)
+    let lastUpdatedPresent = row.presentUpdatedAt
+    let ispresent = !row.present
+    let presentid = row.presentid
+    //mark the present record as true
+    let attendanceResponse = await resetAttendance({id:presentid,present:ispresent});
+    if(attendanceResponse.ok && fullRefresh){
+      let tempEmployees = await getEmployeesInterval({ interval: 10000, register: inputEmployees[0].register,retrieveDate:inputDate });
+      inputEmployees = tempEmployees;
+
+    }else{
+      if (fullRefresh){
+      console.error('error when reseting attendance for ',row.Name)}
+    }
+    return attendanceResponse
+    
+
+    
+  }
+  async function resetToCheckout(row){
+    console.log('within the resetPresent Table component performing checkout')
+    console.log('this is the row passed',row)
+    let lastUpdatedPresent = row.presentUpdatedAt
+    let presentid = row.presentid
+    let attendanceResponse = await resetPresent(row,false)
+    if (attendanceResponse.ok){
+      //create a new record in logger with checkin and checkout values
+      let patchLogResponse = await updateAttendance({ present: presentid,
+                                                      outTime: lastUpdatedPresent, 
+                                     todo: 'createFullRecord',Name:row.Name });
+                                    
+      if (patchLogResponse.ok){
+        let tempEmployees = await getEmployeesInterval({ interval: 10000, register: inputEmployees[0].register,retrieveDate:inputDate });
+        inputEmployees = tempEmployees;
+      }else{
+      console.error('error when creating a patch log ',row.Name)
+        }
+    }else{
+      console.error('error when reseting the attendence ')
+    }
+    
+   //
+
+  
+  }
+
   function resetForm(row){
     row.hours=0,
     row.minutes=0,
     row.isSupervisor=row.isSupervisor,
     row.pin = ''
   }
+
+  //function to handle reset of absence
+  async function handleReset(row){
+    // todo: fetch the lastupdated date for that person which is when they left
+    //use the lastupdated of attendance as checkout and checkin=currenttime into logger
+    //update the attendance table to set the attendance ispresent to True
+    console.log(row)
+  }
+
 </script>
 
 <Drawer>
@@ -446,7 +504,9 @@ let hours = 1; // Default to 1 hour
           <tr>
             <th style="padding-right: 0px;" class={adminDisplay}><input type="checkbox" checked={headSelected} on:click={onHeadSelected}></th>
             <th>Name</th>
+            
             <th>Present?</th>
+            <th>Reset</th>
             <th>Options</th>
             <th>Notes</th>
           
@@ -499,6 +559,20 @@ let hours = 1; // Default to 1 hour
                             
                         </label>
                         </td>
+                        <td class="table-cell-fit justify-self-center">
+                          <button class="btn px-2 py-1 h-6 text-xs variant-filled-success m-1 col-start-2 col-span-1 justify-self-center rounded-md"
+                               class:hidden={(currentpersistedDate!==inputDate)} disabled={selectedStartTime || row.transaction===0}
+                                          on:click={() => (row.resetModal = true)}>Reset</button>
+              
+                      <ResetModal bind:showModal={row.resetModal} row={row} currentView="mobile"
+                        resetModalFn={() => resetPresent(row )}
+                          checkoutFn={() => resetToCheckout(row)}>
+                        <h2 slot="header">
+                          {row.Name}
+                        </h2>
+
+                      </ResetModal>
+                        </td>
                         <td class="table-cell-fit">
                         <div class="flex flex-row space-x-2">
                             <button class="btn variant-filled-success py-4 md:py-3 px-4 rounded-xl text-xs overflow-hidden whitespace-nowrap text-ellipsis "
@@ -512,7 +586,7 @@ let hours = 1; // Default to 1 hour
                         <td>
                           <p class="text-xs opacity-80 tracking-normal">
                           Total Logs: {row.totalLogs? row.totalLogs : 0}<button on:click={handleDisplayLogs(row)} class="p-2 ml-2 transition duration-150 ease-out hover:ease-in hover:variant-filled-secondary hover:text-white hover:font-bold rounded-full border border-slate-700 inline-block ">&rarr;</button><br/>
-                          <span class="font-semibold text-violet-700">Total</span>: {totalDuration(row.logData,
+                          <span class="font-semibold text-violet-700">Total</span>:{totalDuration(row.logData,
                                                       (row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None",row.presentAt).total}
                           {#if row.present===false && row.presentUpdatedAt!=="None"}
                           <span class={"font-semibold text-amber-700 text-sm "+ row.present? 'block':'hidden'}>👋🏻 &rarr; {moment.utc(row.presentUpdatedAt.replace(" ","T")).tz('Asia/Kolkata').format('HH:mm')}</span>
@@ -586,7 +660,23 @@ let hours = 1; // Default to 1 hour
                     </Modal>
                   
                     <div class="grid grid-cols-4  mb-1 mt-1 space-y-2">
-                      <div class="col-start-1 col-span-1 overflow-hidden text-xs sm:text-sm break-words hyphens-auto max-w-[150px] my-auto  ">{row.Name}</div>
+                      <div class="col-start-1 col-span-1 overflow-hidden text-md  break-words hyphens-auto max-w-[150px] my-auto  ">
+                        <span>{row.Name}</span>
+                        
+                      </div>
+                      <button class="btn px-2 py-1 h-6 text-xs variant-filled-success m-1 col-start-2 col-span-1 justify-self-center rounded-md"
+                               class:hidden={(currentpersistedDate!==inputDate)} disabled={selectedStartTime || row.transaction===0}
+                                          on:click={() => (row.resetModal = true)}>Reset</button>
+              
+                      <ResetModal bind:showModal={row.resetModal} row={row} 
+                        resetModalFn={() => resetPresent(row )}
+                          checkoutFn={() => resetToCheckout(row)}>
+                        <h2 slot="header">
+                          {row.Name}
+                        </h2>
+
+                      </ResetModal>
+
                       <div class={'mr-auto mt-1 ml-3 text-red-700 p-1 text-xs col-start-2 col-span-1 '+(row.disabledCheckin? 'hidden' : 'block')}>
                         <Timer startTime={row.latestCheckoutTime? row.latestCheckoutTime: moment()} setid={row.id}/>
                       </div> 
@@ -626,7 +716,11 @@ let hours = 1; // Default to 1 hour
                         Total Logs: {row.totalLogs? row.totalLogs : 0}<br/>
                         <span class=" text-violet-700 text-xs">Total</span>:{totalDuration(row.logData,
                                                       (row.presentUpdatedAt==="None" && row.disabledCheckin==false)? moment.utc(row.latestCheckoutTime).tz('Asia/Kolkata').format('YYYY/MM/DD HH:mm:ss'):"None",row.presentAt).total}
-                        </p>
+                        {#if row.present===false && row.presentUpdatedAt!=="None"}
+                        <span class={"font-semibold text-amber-700 text-sm "+ row.present? 'block':'hidden'}>👋🏻 &rarr; {moment.utc(row.presentUpdatedAt.replace(" ","T")).tz('Asia/Kolkata').format('HH:mm')}</span>
+                        {/if}
+                      </p>
+                      
                       <div class="order-last grid grid-cols-2 items-center space-x-1">
                         <button class="col-start-1 btn rounded-xl px-4 py-2  variant-filled-success min-w-18 text-xs overflow-hidden whitespace-nowrap  text-ellipsis"
                          on:click={handleUpdates(row.id,'checkin')} 
@@ -635,6 +729,7 @@ let hours = 1; // Default to 1 hour
                         <button class=" col-start-2 btn rounded-xl px-4 py-2  variant-filled-error min-w-18 text-xs overflow-hidden whitespace-nowrap  text-ellipsis" 
                         on:click={handleUpdates(row.id,'checkout')} 
                           disabled={row.disabledCheckout || currentpersistedDate!==inputDate || dataRefresh || selectedStartTime}>checkout</button>
+
                       </div>
                       
                       
